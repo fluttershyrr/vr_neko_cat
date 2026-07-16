@@ -1,0 +1,181 @@
+[plugin]
+id = "vr_neko_cat"
+name = "VR N.E.K.O.cat"
+description = "N.E.K.O VRChat 全功能插件 — UDP → AnyaDance → SteamVR → VRChat FBT/手势/情感/舞蹈/视觉/移动"
+short_description = "N.E.K.O virtual avatar in VRChat: FBT, gestures, emotions, dance, locomotion via AnyaDance/SteamVR"
+keywords = ["VRChat", "VR", "AnyaDance", "FBT", "全身追踪", "手势", "舞蹈", "MMD", "情感", "N.E.K.O"]
+version = "2.1.0"
+entry = "plugins.vr_neko_cat:VRControllerPlugin"
+
+[plugin.author]
+name = "N.E.K.O Team"
+
+[plugin.sdk]
+recommended = ">=0.1.0,<0.2.0"
+supported = ">=0.1.0,<0.3.0"
+
+[plugin.i18n]
+default_locale = "zh-CN"
+locales_dir = "i18n"
+
+[plugin.ui]
+enabled = true
+
+[[plugin.ui.panel]]
+id = "main"
+title = "VR N.E.K.O.cat - VRChat 控制面板"
+entry = "static/index.html"
+context = "dashboard"
+permissions = ["state:read", "action:call"]
+
+[[plugin.ui.guide]]
+id = "quickstart"
+title = "快速开始"
+entry = "docs/quickstart.md"
+permissions = ["state:read"]
+
+[plugin_runtime]
+enabled = true
+auto_start = false
+
+[plugin.store]
+enabled = true
+
+[network]
+host = "127.0.0.1"
+port = 39570
+stream_rate_hz = 60
+max_packet_bytes = 8192
+
+[position_limits]
+max_abs_position = 10.0
+max_y = 2.0
+reset_hmd_y = 1.5
+translation_sensitivity = 0.002
+rotation_sensitivity = 0.08
+pitch_limit_degrees = 80.0
+
+[hmd_pose]
+position_x = 0.0
+position_y = 1.5
+position_z = 0.0
+rotation_x = 0.0
+rotation_y = 0.0
+rotation_z = 0.0
+rotation_w = 1.0
+
+[left_controller_pose]
+position_x = -0.26
+position_y = 1.1
+position_z = -0.54
+rotation_x = 0.77
+rotation_y = 0.1
+rotation_z = -0.16
+rotation_w = 0.61
+
+[right_controller_pose]
+position_x = 0.27
+position_y = 1.57
+position_z = -0.54
+rotation_x = 0.77
+rotation_y = -0.1
+rotation_z = 0.16
+rotation_w = 0.61
+
+[hip_pose]
+position_x = 0.0
+position_y = 1.07
+position_z = -0.05
+rotation_x = 0.0
+rotation_y = 0.0
+rotation_z = 0.0
+rotation_w = 1.0
+
+[left_foot_pose]
+position_x = -0.09
+position_y = 0.26
+position_z = 0.1
+rotation_x = 0.0
+rotation_y = 0.0
+rotation_z = 0.0
+rotation_w = 1.0
+
+[right_foot_pose]
+position_x = 0.09
+position_y = 0.26
+position_z = 0.1
+rotation_x = 0.0
+rotation_y = 0.0
+rotation_z = 0.0
+rotation_w = 1.0
+
+[left_controller_input]
+trigger_click = false
+trigger_value = 0.0
+menu_click = false
+a_click = false
+b_click = false
+grip_click = false
+grip_value = 0.0
+joystick_x = 0.0
+joystick_y = 0.0
+trackpad_x = 0.0
+trackpad_y = 0.0
+
+[right_controller_input]
+trigger_click = false
+trigger_value = 0.0
+menu_click = false
+a_click = false
+b_click = false
+grip_click = false
+grip_value = 0.0
+joystick_x = 0.0
+joystick_y = 0.0
+trackpad_x = 0.0
+trackpad_y = 0.0
+
+[left_finger_bends]
+thumb = 0.0
+index = 0.0
+middle = 0.0
+ring = 0.0
+pinky = 0.0
+
+[right_finger_bends]
+thumb = 0.0
+index = 0.0
+middle = 0.0
+ring = 0.0
+pinky = 0.0
+
+[dance]
+height_m = 1.5
+speed = 1.0
+fps = 60.0
+hand_reach = 1.22
+loop = true
+vmd_path = ""
+model_path = ""
+
+[mirror_settings]
+mirror_hands = false
+mirror_feet = false
+manipulation_frame = "hmd"
+
+[ui_settings]
+always_on_top = false
+ui_mode = "full"
+
+[vrchat]
+avatar_height = 1.5
+fbt_calibrated = false
+
+[anyadance]
+path = ""
+
+[screen_capture]
+monitor_index = 0
+quality = 75
+scale = 1.0
+format = "jpeg"

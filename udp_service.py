@@ -103,18 +103,26 @@ class VrUdpService:
 
     def build_packet(self) -> dict[str, Any]:
         """构建符合 AnyaDance 协议的 JSON 数据包：version + 6 设备位姿 + 2 控制器输入。"""
-        devices = {
-            "hmd": self._get_device_pose("hmd_pose"),
-            "left_controller": self._get_device_pose("left_controller_pose"),
-            "right_controller": self._get_device_pose("right_controller_pose"),
-            "hip": self._get_device_pose("hip_pose"),
-            "left_foot": self._get_device_pose("left_foot_pose"),
-            "right_foot": self._get_device_pose("right_foot_pose"),
-        }
-        inputs = {
-            "left_controller": self._get_controller_input("left_controller_input"),
-            "right_controller": self._get_controller_input("right_controller_input"),
-        }
+        cfg = self._settings
+        send_hmd = bool(cfg.get("send_hmd_pose", True))
+        send_controllers = bool(cfg.get("send_controller_poses", True))
+        send_trackers = bool(cfg.get("send_tracker_poses", True))
+
+        devices: dict[str, Any] = {}
+        if send_hmd:
+            devices["hmd"] = self._get_device_pose("hmd_pose")
+        if send_controllers:
+            devices["left_controller"] = self._get_device_pose("left_controller_pose")
+            devices["right_controller"] = self._get_device_pose("right_controller_pose")
+        if send_trackers:
+            devices["hip"] = self._get_device_pose("hip_pose")
+            devices["left_foot"] = self._get_device_pose("left_foot_pose")
+            devices["right_foot"] = self._get_device_pose("right_foot_pose")
+
+        inputs: dict[str, Any] = {}
+        if send_controllers:
+            inputs["left_controller"] = self._get_controller_input("left_controller_input")
+            inputs["right_controller"] = self._get_controller_input("right_controller_input")
         return {"version": self.PROTOCOL_VERSION, "devices": devices, "inputs": inputs}
 
     def send_sync(self) -> bool:

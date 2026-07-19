@@ -55,8 +55,9 @@ class VRControllerPlugin(NekoPluginBase):
         self._loop = asyncio.get_event_loop()
 
     async def _stream_loop(self) -> None:
-        """60Hz UDP 位姿流送主循环，不断将当前配置中的设备位姿/输入发送到 AnyaDance。"""
-        interval = 1.0 / max(1.0, self.STREAM_RATE_HZ)
+        """UDP 位姿流送主循环，根据配置中的 stream_rate_hz 发送数据到 AnyaDance。"""
+        rate = float(self._config.get("stream_rate_hz", self.STREAM_RATE_HZ))
+        interval = 1.0 / max(1.0, rate)
         while self._streaming:
             await self.udp_service.send()
             await asyncio.sleep(interval)
@@ -71,9 +72,17 @@ class VRControllerPlugin(NekoPluginBase):
             priority=priority,
         )
 
+    async def _ensure_streaming(self, action: str = "operation") -> None:
+        """如果 UDP 流送未启动，则自动启动，确保姿态/输入能被 AnyaDance 接收。"""
+        if not self._streaming:
+            self.logger.info(f"{action} 需要 UDP 流送，自动启动")
+            await self.ui_api.start_stream()
+
     @lifecycle(id="startup")
     async def startup(self, **_):
         self._config = await self.config_service.load()
+        # 启动时扫描一次驱动目录 & vrpathreg，持久化到配置，避免后续轮询重复扫描
+        await self.driver_service.ensure_startup_scan()
         self.register_static_ui("static")
         self.set_list_actions([{
             "id": "open_ui",
@@ -96,7 +105,6 @@ class VRControllerPlugin(NekoPluginBase):
         await self.vision_bridge.stop_auto_look()
         self.vrchat_service.stop_locomotion()
         self.udp_service.close()
-        await self.driver_service.stop_anyadance()
         return Ok({"status": "shutdown"})
 
     @ui.context(id="dashboard")
@@ -121,10 +129,18 @@ class VRControllerPlugin(NekoPluginBase):
 
     @ui.action(id="apply_preset", label=tr("actions.apply_preset", default="应用预设"), refresh_context=True)
     @plugin_entry(id="apply_preset", name=tr("entries.apply_preset.name", default="应用预设位姿"), description=tr("entries.apply_preset.description", default="VRChat FBT 预设位姿"), input_schema={"type": "object", "properties": {"preset": {"type": "string", "enum": ["standing", "t_pose", "menu"], "default": "standing"}}})
-    async def apply_preset(self, preset: str = "standing", **_): return await self.ui_api.apply_preset(preset)
+    async def apply_preset(self, preset: str = "standing", **_):
+        await self._ensure_streaming("apply_preset")
+        r = await self.ui_api.apply_preset(preset)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="set_device_pose", name=tr("entries.set_device_pose.name", default="设置设备位姿"), description=tr("entries.set_device_pose.description", default="设置 VRChat tracker 的 3D 位置和四元数旋转"), input_schema={"type": "object", "properties": {"device": {"type": "string", "enum": ["hmd", "left_controller", "right_controller", "hip", "left_foot", "right_foot"]}, "position_x": {"type": "number"}, "position_y": {"type": "number"}, "position_z": {"type": "number"}, "rotation_x": {"type": "number"}, "rotation_y": {"type": "number"}, "rotation_z": {"type": "number"}, "rotation_w": {"type": "number"}}, "required": ["device"]})
-    async def set_device_pose(self, device: str = "", **kwargs): return await self.ui_api.set_device_pose(device=device, **kwargs)
+    async def set_device_pose(self, device: str = "", **kwargs):
+        await self._ensure_streaming("set_device_pose")
+        r = await self.ui_api.set_device_pose(device=device, **kwargs)
+        await self.udp_service.send()
+        return r
 
     # ──────────────────── 手指/摇杆/按键/手势 ────────────────────
 
@@ -139,7 +155,9 @@ class VRControllerPlugin(NekoPluginBase):
 
     @plugin_entry(id="hand_gesture", name=tr("entries.hand_gesture.name", default="手部手势"), description=tr("entries.hand_gesture.description", default="VRChat Index 标准手势"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"]}, "gesture": {"type": "string", "enum": ["open", "fist", "point", "peace", "thumbs_up", "rock", "gun"]}}, "required": ["side", "gesture"]})
     async def hand_gesture(self, side: str = "left", gesture: str = "open", **_):
+        await self._ensure_streaming("hand_gesture")
         r = await self.ui_api.hand_gesture(side=side, gesture=gesture)
+        await self.udp_service.send()
         self._notify_ai(f"{'右手' if side == 'right' else '左手'}做出了 {gesture} 手势")
         return r
 
@@ -170,7 +188,9 @@ class VRControllerPlugin(NekoPluginBase):
     @ui.action(id="set_emotion", label=tr("actions.set_emotion", default="设置情感"), refresh_context=True)
     @plugin_entry(id="set_emotion", name=tr("entries.set_emotion.name", default="设置情感"), description=tr("entries.set_emotion.description", default="VRChat 角色情感→全身姿态 (12种)"), input_schema={"type": "object", "properties": {"emotion": {"type": "string", "enum": ["happy", "sad", "angry", "surprised", "scared", "excited", "shy", "confident", "relaxed", "curious", "tired", "neutral"], "default": "neutral"}, "intensity": {"type": "number", "default": 1.0, "minimum": 0.0, "maximum": 1.0}}})
     async def set_emotion(self, emotion: str = "neutral", intensity: float = 1.0, **_):
+        await self._ensure_streaming("set_emotion")
         r = await self.ui_api.set_emotion(emotion, intensity)
+        await self.udp_service.send()
         self._notify_ai(f"情感切换为 {emotion}，强度 {intensity:.0%}", priority=6)
         return r
 
@@ -220,6 +240,7 @@ class VRControllerPlugin(NekoPluginBase):
     @ui.action(id="wave_hand", label=tr("actions.wave_hand", default="挥手"), refresh_context=True)
     @plugin_entry(id="wave_hand", name=tr("entries.wave_hand.name", default="挥手"), description=tr("entries.wave_hand.description", default="VRChat 模型挥手"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}, "style": {"type": "string", "enum": ["hello", "bye", "excited"], "default": "hello"}}})
     async def wave_hand(self, side: str = "right", style: str = "hello", **_):
+        await self._ensure_streaming("wave_hand")
         r = await self.ui_api.do_wave_hand(side, style)
         self._notify_ai(f"正在挥手 ({style})")
         return r
@@ -282,13 +303,17 @@ class VRControllerPlugin(NekoPluginBase):
     @ui.action(id="vrc_gesture", label=tr("actions.vrc_gesture", default="VRC手势"), refresh_context=True)
     @plugin_entry(id="vrc_gesture", name=tr("entries.vrc_gesture.name", default="VRChat 手势"), description=tr("entries.vrc_gesture.description", default="VRChat 标准 8 手势 (neutral/fist/hand_open/point/peace/rock/gun/thumbs_up)"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}, "gesture": {"type": "string", "enum": ["neutral", "fist", "hand_open", "point", "peace", "rock", "gun", "thumbs_up"], "default": "neutral"}}})
     async def vrc_gesture(self, side: str = "right", gesture: str = "neutral", **_):
+        await self._ensure_streaming("vrc_gesture")
         r = await self.ui_api.vrc_gesture(side, gesture)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat {'右手' if side == 'right' else '左手'}做出 {gesture} 手势")
         return r
 
     @plugin_entry(id="vrc_gesture_both", name=tr("entries.vrc_gesture_both.name", default="VRChat 双手手势"), description=tr("entries.vrc_gesture_both.description", default="VRChat 双手同步手势"), input_schema={"type": "object", "properties": {"gesture": {"type": "string", "enum": ["neutral", "fist", "hand_open", "point", "peace", "rock", "gun", "thumbs_up"], "default": "neutral"}}})
     async def vrc_gesture_both(self, gesture: str = "neutral", **_):
+        await self._ensure_streaming("vrc_gesture_both")
         r = await self.ui_api.vrc_gesture_both(gesture)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat 双手做出 {gesture} 手势", priority=6)
         return r
 
@@ -389,35 +414,30 @@ class VRControllerPlugin(NekoPluginBase):
         self._notify_ai("AnyaDance 驱动已注销" if r.get("ok") else f"驱动注销失败: {r.get('error')}")
         return Ok(r)
 
-    @plugin_entry(id="start_anyadance", name=tr("entries.start_anyadance.name", default="启动 AnyaDance"), description=tr("entries.start_anyadance.description", default="启动 AnyaDance.exe 桌面程序"))
-    async def start_anyadance_entry(self, **_):
-        r = await self.driver_service.start_anyadance()
-        self._notify_ai("AnyaDance 已启动" if r.get("ok") else f"启动失败: {r.get('error')}")
-        return Ok(r)
-
-    @plugin_entry(id="stop_anyadance", name=tr("entries.stop_anyadance.name", default="停止 AnyaDance"), description=tr("entries.stop_anyadance.description", default="停止 AnyaDance.exe 进程"))
-    async def stop_anyadance_entry(self, **_):
-        r = await self.driver_service.stop_anyadance()
-        self._notify_ai("AnyaDance 已停止")
-        return Ok(r)
-
-    @plugin_entry(id="restart_steamvr", name=tr("entries.restart_steamvr.name", default="重启 SteamVR"), description=tr("entries.restart_steamvr.description", default="强制停止并重新启动 SteamVR"))
+    @plugin_entry(id="restart_steamvr", name=tr("entries.restart_steamvr.name", default="重启 SteamVR"), description=tr("entries.restart_steamvr.description", default="强制停止并重新启动 SteamVR（注册驱动后需要重启生效）"))
     async def restart_steamvr_entry(self, **_):
         r = await self.driver_service.restart_steamvr()
         self._notify_ai("正在重启 SteamVR...")
         return Ok(r)
 
-    @plugin_entry(id="driver_oneclick", name=tr("entries.driver_oneclick.name", default="一键启动"), description=tr("entries.driver_oneclick.description", default="一键完成: 注册驱动 → 启动 AnyaDance → 开始流送"))
+    @plugin_entry(id="driver_oneclick", name=tr("entries.driver_oneclick.name", default="一键启动"), description=tr("entries.driver_oneclick.description", default="一键完成: 注册驱动 → 重启 SteamVR → 开始 UDP 流送"))
     async def driver_oneclick(self, **_):
         reg = await self.driver_service.register_driver()
         if not reg.get("ok") and reg.get("status") != "already_registered":
             return Ok({"ok": False, "step": "register", "error": reg.get("error")})
-        start = await self.driver_service.start_anyadance()
-        if not start.get("ok") and start.get("status") != "already_running":
-            return Ok({"ok": False, "step": "start", "error": start.get("error")})
+
+        # 给 SteamVR 写入注册表/文件一点缓冲时间，然后复核状态
+        await asyncio.sleep(0.5)
+        actually_registered = self.driver_service.get_driver_state().get("driver_registered", False)
+
+        svr = await self.driver_service.restart_steamvr()
         stream = await self.ui_api.start_stream()
-        self._notify_ai("AnyaDance 一键启动完成: 驱动已注册 → 进程已启动 → UDP 流送中")
-        return Ok({"ok": True, "steps": {"register": reg, "start": start, "stream": stream}})
+        if actually_registered:
+            self._notify_ai("一键启动完成: 驱动已注册 → SteamVR 重启中 → UDP 流送已开启")
+        else:
+            self._notify_ai("一键启动已执行，但驱动注册状态未确认，请稍后手动检查", priority=6)
+        return Ok({"ok": True, "status": "done", "registered": actually_registered, "steps": {"register": reg, "restart_steamvr": svr, "stream": stream}})
+
 
     # ──────────────────── 自主视觉截图 ────────────────────
 
@@ -445,7 +465,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_emotion(self, emotion: str = "neutral", intensity: float = 1.0, **_):
+        await self._ensure_streaming("llm_vr_emotion")
         r = await self.ui_api.set_emotion(emotion, intensity)
+        await self.udp_service.send()
         self._notify_ai(f"情感切换为 {emotion}，强度 {intensity:.0%}", priority=6)
         return r
 
@@ -456,7 +478,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_gesture(self, side: str = "right", gesture: str = "neutral", **_):
+        await self._ensure_streaming("llm_vr_gesture")
         r = await self.ui_api.vrc_gesture(side, gesture)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat {'右手' if side == 'right' else '左手'}做出 {gesture} 手势")
         return r
 
@@ -467,7 +491,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_gesture_both(self, gesture: str = "neutral", **_):
+        await self._ensure_streaming("llm_vr_gesture_both")
         r = await self.ui_api.vrc_gesture_both(gesture)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat 双手做出 {gesture} 手势", priority=6)
         return r
 
@@ -526,6 +552,7 @@ class VRControllerPlugin(NekoPluginBase):
         elif action == "tilt":
             r = await self.ui_api.do_tilt_head("left", 15)
         elif action == "wave":
+            await self._ensure_streaming("vr_animation/wave")
             r = await self.ui_api.do_wave_hand(side, style)
             self._notify_ai(f"正在挥手 ({style})")
         elif action == "bow":
@@ -652,7 +679,7 @@ class VRControllerPlugin(NekoPluginBase):
 
     @llm_tool(
         name="vr_driver_status",
-        description="查询 AnyaDance 驱动的当前状态，包括是否运行、是否已注册、AnyaDance.exe 路径等。",
+        description="查询 AnyaDance SteamVR 驱动的当前状态：驱动目录、是否已注册、vrpathreg 是否可用。注册后重启 SteamVR 即可自动加载驱动监听 UDP。",
         parameters={"type": "object", "properties": {}},
         timeout=5.0,
     )
@@ -661,7 +688,7 @@ class VRControllerPlugin(NekoPluginBase):
 
     @llm_tool(
         name="vr_driver_oneclick",
-        description="一键启动 VR 环境: 自动注册 AnyaDance 驱动、启动 AnyaDance.exe、开启 UDP 流送。适用于首次启动或恢复连接。",
+        description="一键启动 VR 环境: 自动注册 AnyaDance 驱动到 SteamVR → 重启 SteamVR 使驱动生效 → 开启 UDP 流送。适用于首次启动或恢复连接。",
         parameters={"type": "object", "properties": {}},
         timeout=30.0,
     )
@@ -669,12 +696,16 @@ class VRControllerPlugin(NekoPluginBase):
         reg = await self.driver_service.register_driver()
         if not reg.get("ok") and reg.get("status") != "already_registered":
             return {"ok": False, "step": "register", "error": reg.get("error")}
-        start = await self.driver_service.start_anyadance()
-        if not start.get("ok") and start.get("status") != "already_running":
-            return {"ok": False, "step": "start", "error": start.get("error")}
+        await asyncio.sleep(0.5)
+        actually_registered = self.driver_service.get_driver_state().get("driver_registered", False)
+        svr = await self.driver_service.restart_steamvr()
         stream = await self.ui_api.start_stream()
-        self._notify_ai("AnyaDance 一键启动完成: 驱动已注册 → 进程已启动 → UDP 流送中")
-        return {"ok": True, "register": reg, "start": start, "stream": stream}
+        if actually_registered:
+            self._notify_ai("一键启动完成: 驱动已注册 → SteamVR 重启中 → UDP 流送已开启")
+        else:
+            self._notify_ai("一键启动已执行，但驱动注册状态未确认，请稍后手动检查", priority=6)
+        return {"ok": True, "status": "done", "registered": actually_registered, "register": reg, "restart_steamvr": svr, "stream": stream}
+
 
     @llm_tool(
         name="vr_capture_screen",

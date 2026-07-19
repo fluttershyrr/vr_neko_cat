@@ -61,7 +61,7 @@ class VrDashboardService:
             "connection": {
                 "host": cfg.get("host", "127.0.0.1"),
                 "port": cfg.get("port", 39570),
-                "stream_rate_hz": cfg.get("stream_rate_hz", 60),
+                "stream_rate_hz": cfg.get("stream_rate_hz", 20),
                 "streaming": self.plugin._streaming,
             },
             "devices": self.pose_service.get_all_device_states(),
@@ -87,6 +87,9 @@ class VrDashboardService:
                 "translation_sensitivity": cfg.get("translation_sensitivity", 0.002),
                 "rotation_sensitivity": cfg.get("rotation_sensitivity", 0.08),
                 "pitch_limit_degrees": cfg.get("pitch_limit_degrees", 80.0),
+                "send_hmd_pose": cfg.get("send_hmd_pose", True),
+                "send_controller_poses": cfg.get("send_controller_poses", True),
+                "send_tracker_poses": cfg.get("send_tracker_poses", True),
             },
             "dance_config": {
                 "height": cfg.get("dance_height", 1.5),
@@ -107,6 +110,7 @@ class VrDashboardService:
 
         simple_keys = [
             "host", "port", "stream_rate_hz",
+            "send_hmd_pose", "send_controller_poses", "send_tracker_poses",
             "mirror_hands", "mirror_feet", "manipulation_frame",
             "always_on_top", "ui_mode", "avatar_height", "fbt_calibrated",
             "translation_sensitivity", "rotation_sensitivity", "pitch_limit_degrees",

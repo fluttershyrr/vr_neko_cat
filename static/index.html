@@ -6,90 +6,340 @@
   <title>VR N.E.K.O.cat - VRChat</title>
   <style>
     :root {
-      --bg-page: #0f1117; --bg-card: #181b24; --bg-card-hover: #1e2230;
-      --bg-input: #11131a; --bg-input-focus: #1a1e2a;
-      --border: #252836; --border-focus: #6366f1;
-      --text: #e4e6ed; --text-secondary: #8b8fa3; --text-muted: #5c6072;
-      --accent: #6366f1; --accent-light: #818cf8;
-      --success: #22c55e; --success-light: rgba(34,197,94,0.15);
-      --warning: #f59e0b; --warning-light: rgba(245,158,11,0.15);
-      --danger: #ef4444; --danger-light: rgba(239,68,68,0.15);
-      --card-radius: 12px;
+      --bg-deep: #eef1f5;
+      --bg-page: #eef1f5;
+      --bg-card: #ffffff;
+      --bg-card-flat: #ffffff;
+      --bg-input: #f7f8fa;
+      --bg-input-focus: #ffffff;
+      --border: #e2e5eb;
+      --border-light: rgba(99,102,241,0.3);
+      --border-focus: #6366f1;
+      --text: #1a1d2e;
+      --text-secondary: #5f6778;
+      --text-muted: #9098aa;
+      --accent: #6366f1;
+      --accent-light: #4f46e5;
+      --accent-glow: rgba(99,102,241,0.16);
+      --accent-soft: rgba(99,102,241,0.06);
+      --success: #10b981;
+      --success-light: rgba(16,185,129,0.1);
+      --warning: #f59e0b;
+      --warning-light: rgba(245,158,11,0.1);
+      --danger: #ef4444;
+      --danger-light: rgba(239,68,68,0.08);
+      --card-radius: 16px;
+      --card-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
+      --card-hover-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(99,102,241,0.06);
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg-page); color: var(--text); min-height: 100vh; padding: 24px; line-height: 1.5; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; background: var(--bg-card); padding: 20px 24px; border-radius: var(--card-radius); border: 1px solid var(--border); }
-    .logo { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #a855f7); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
-    .header h1 { font-size: 1.25rem; font-weight: 700; }
-    .sub { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; margin-right: auto; }
 
-    .tabs { display: flex; gap: 4px; background: var(--bg-input); border-radius: 8px; padding: 3px; }
-    .tab-btn { padding: 6px 14px; border: none; background: none; color: var(--text-muted); font-size: 0.82rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { background: var(--accent); color: #fff; }
+    /* ── 全局 ── */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Inter', sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* 背景纹理：柔白底 + 极淡渐变光晕 */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 100% 50% at 20% 10%, rgba(99,102,241,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(139,92,246,0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(16,185,129,0.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .container { max-width: 1240px; margin: 0 auto; position: relative; z-index: 0; }
 
-    .tab-content { display: none; }
+    /* ── 页头 ── */
+    .header {
+      display: flex; align-items: center; gap: 18px; margin-bottom: 28px;
+      background: var(--bg-card); padding: 20px 26px;
+      border-radius: var(--card-radius); border: 1px solid var(--border);
+      box-shadow: var(--card-shadow); backdrop-filter: blur(8px);
+    }
+    .logo {
+      width: 46px; height: 46px;
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+      border-radius: 13px; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #fff; flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.25);
+    }
+    .header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+    .sub { font-size: 0.78rem; color: var(--text-secondary); margin-top: 3px; margin-right: auto; }
+
+    /* ── 标签页 ── */
+    .tabs { display: flex; gap: 4px; background: var(--bg-input); border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+    .tab-btn {
+      padding: 7px 16px; border: none; background: none; color: var(--text-muted);
+      font-size: 0.8rem; font-weight: 500; cursor: pointer; border-radius: 7px;
+      transition: all var(--transition); position: relative; white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.3), 0 1px 2px rgba(99,102,241,0.2);
+    }
+
+    .tab-content { display: none; animation: fadeSlide 0.3s ease; }
     .tab-content.active { display: block; }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    .card { background: var(--bg-card); border-radius: var(--card-radius); padding: 20px 24px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .card-title { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .card-title::before { content: ''; width: 4px; height: 14px; background: var(--accent); border-radius: 2px; }
+    /* ── 卡片 ── */
+    .card {
+      background: var(--bg-card); border-radius: var(--card-radius);
+      padding: 22px 26px; margin-bottom: 16px;
+      border: 1px solid var(--border); box-shadow: var(--card-shadow);
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+    .card:hover { box-shadow: var(--card-hover-shadow); }
+    .card-title {
+      font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.11em; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    /* 装饰色条 */
+    .card-title::before {
+      content: ''; width: 3px; height: 16px; border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent), #8b5cf6);
+    }
 
+    /* ── 网格 ── */
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-    .grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
 
+    /* ── 表单 ── */
     .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
-    input[type="text"], input[type="number"], select { width: 100%; padding: 9px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; transition: border-color 0.2s; outline: none; }
-    input:focus, select:focus { border-color: var(--border-focus); background: var(--bg-input-focus); }
-    input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; background: var(--border); border-radius: 3px; outline: none; }
-    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg-card); }
+    .form-group label {
+      display: block; font-size: 0.78rem; color: var(--text-secondary);
+      margin-bottom: 6px; font-weight: 500; letter-spacing: 0.01em;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%; padding: 10px 14px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 9px; color: var(--text);
+      font-size: 0.88rem; transition: all var(--transition); outline: none;
+    }
+    input[type="text"]:hover, input[type="number"]:hover, select:hover { border-color: #c2c7d2; background: #fdfdfe; }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: var(--border-focus); background: var(--bg-input-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* ── Range 滑块 ── */
+    input[type="range"] {
+      -webkit-appearance: none; width: 100%; height: 6px;
+      background: #e2e5eb; border-radius: 3px; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      border-radius: 50%; cursor: pointer;
+      border: 2px solid #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3), 0 0 0 1px rgba(99,102,241,0.12);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); box-shadow: 0 3px 12px rgba(99,102,241,0.4); }
     .range-row { display: flex; align-items: center; gap: 10px; }
     .range-row input[type="range"] { flex: 1; }
-    .range-val { min-width: 38px; text-align: right; font-size: 0.85rem; color: var(--accent-light); font-variant-numeric: tabular-nums; }
-    .btn { padding: 8px 18px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: var(--accent-light); }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { background: #16a34a; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: #dc2626; }
-    .btn-warning { background: var(--warning); color: #111; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { border-color: var(--accent); color: var(--accent-light); }
-    .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-    .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-    .status-dot.on { background: var(--success); box-shadow: 0 0 0 3px var(--success-light); }
-    .status-dot.off { background: var(--text-muted); }
-    .device-section { background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
-    .device-section h4 { font-size: 0.85rem; font-weight: 600; color: var(--accent-light); margin-bottom: 10px; text-transform: capitalize; user-select: none; }
-    .device-section h4::after { content: ' · 按住拖拽调试'; font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
-    .pos-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .device-section input[type="number"] { cursor: ew-resize; user-select: none; -webkit-user-select: none; touch-action: none; }
-    .device-section input[type="number"].dragging { cursor: grabbing; background: var(--bg-input-focus); border-color: var(--border-focus); }
-    .finger-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
-    .finger-item label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; text-align: center; }
-    .preset-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .toggle-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
-    .toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
-    .toggle input { display: none; }
-    .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 12px; transition: 0.2s; }
-    .toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: 0.2s; }
-    .toggle input:checked + .toggle-slider { background: var(--accent); }
-    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
-    .toggle-label { font-size: 0.85rem; color: var(--text-secondary); }
-    .info-box { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 0.82rem; color: var(--text-secondary); }
-    .info-box .highlight { color: var(--accent-light); font-weight: 600; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .emotion-chip { display: inline-flex; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; background: var(--bg-input); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
-    .emotion-chip:hover { border-color: var(--accent); }
-    .emotion-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .emotion-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .range-val {
+      min-width: 42px; text-align: right; font-size: 0.85rem;
+      color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600;
+    }
 
-    @media (max-width: 768px) { .grid2, .grid3, .grid4 { grid-template-columns: 1fr; } body { padding: 12px; } }
+    /* ── 按钮 ── */
+    .btn {
+      padding: 9px 20px; border: none; border-radius: 9px;
+      font-size: 0.84rem; font-weight: 600; cursor: pointer;
+      transition: all var(--transition); display: inline-flex;
+      align-items: center; gap: 6px; letter-spacing: 0.01em;
+      position: relative; overflow: hidden;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff;
+      box-shadow: 0 2px 6px rgba(99,102,241,0.28), 0 0 0 1px rgba(99,102,241,0.1);
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #4f46e5, #8b5cf6); box-shadow: 0 4px 14px rgba(99,102,241,0.4); }
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+      box-shadow: 0 2px 6px rgba(16,185,129,0.28);
+    }
+    .btn-success:hover { box-shadow: 0 4px 14px rgba(16,185,129,0.4); }
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
+      box-shadow: 0 2px 6px rgba(239,68,68,0.22);
+    }
+    .btn-danger:hover { box-shadow: 0 4px 14px rgba(239,68,68,0.35); }
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+      box-shadow: 0 2px 6px rgba(245,158,11,0.25);
+    }
+    .btn-warning:hover { box-shadow: 0 4px 14px rgba(245,158,11,0.35); }
+    .btn-outline {
+      background: #fff; border: 1px solid var(--border); color: var(--text-secondary);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .btn-sm { padding: 6px 13px; font-size: 0.76rem; border-radius: 7px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    /* ── 状态圆点 ── */
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+      margin-right: 8px; position: relative; transition: all var(--transition);
+    }
+    .status-dot.on { background: var(--success); box-shadow: 0 0 0 3px var(--success-light), 0 0 10px rgba(16,185,129,0.3); }
+    .status-dot.off { background: #c2c7d2; }
+
+    /* 设备位姿卡片 */
+    .device-section {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 12px; padding: 15px 17px; margin-bottom: 10px;
+      user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+      position: relative; cursor: grab; touch-action: none;
+    }
+    .device-section:hover { border-color: #c2c7d2; }
+    .device-section h4 {
+      font-size: 0.84rem; font-weight: 600; color: var(--text);
+      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .device-section h4::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6); margin-right: 10px; flex-shrink: 0;
+    }
+    .device-section h4 .hint { font-size: 0.68rem; color: var(--text-muted); font-weight: 400; }
+    .pos-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .device-section input[type="number"] {
+      cursor: ew-resize; user-select: none; -webkit-user-select: none;
+      -moz-user-select: none; -ms-user-select: none; caret-color: transparent;
+      touch-action: none; text-align: center; font-variant-numeric: tabular-nums;
+      padding: 8px 8px; font-size: 0.84rem;
+    }
+    .device-section input[type="number"].dragging {
+      cursor: grabbing; background: var(--bg-input-focus);
+      border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .device-section.card-drag { cursor: none; border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--accent-glow), 0 4px 12px rgba(99,102,241,0.12); }
+    .device-section.card-drag.move::after { content: '↔ XY移动'; }
+    .device-section.card-drag.rotate::after { content: '↻ 旋转'; }
+    .device-section.card-drag.depth::after { content: '↗ Z深度'; }
+    .device-section.card-drag::after {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff; padding: 6px 16px; border-radius: 22px; font-size: 0.78rem;
+      font-weight: 600; pointer-events: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15), 0 0 20px rgba(99,102,241,0.25);
+      z-index: 10;
+    }
+
+    /* ── 手指 ── */
+    .finger-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+    .finger-item label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px; text-align: center; }
+    .preset-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Toggle 开关 ── */
+    .toggle-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+    .toggle { position: relative; width: 46px; height: 26px; cursor: pointer; }
+    .toggle input { display: none; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: #cbd0da; border-radius: 13px;
+      transition: all var(--transition);
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: all var(--transition);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .toggle input:checked + .toggle-slider {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      box-shadow: 0 0 8px rgba(99,102,241,0.25);
+    }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); background: #fff; }
+    .toggle-label { font-size: 0.84rem; color: var(--text-secondary); }
+
+    /* ── 信息框 ── */
+    .info-box {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 17px; font-size: 0.82rem;
+      color: var(--text-secondary); line-height: 1.5;
+    }
+    .info-box .highlight { color: var(--accent); font-weight: 600; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    /* ── 情感标签 ── */
+    .emotion-chip {
+      display: inline-flex; padding: 6px 14px; border-radius: 8px;
+      font-size: 0.76rem; font-weight: 500;
+      background: #fff; border: 1px solid var(--border);
+      cursor: pointer; transition: all var(--transition);
+      color: var(--text-secondary);
+    }
+    .emotion-chip:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .emotion-chip.active {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 10px rgba(99,102,241,0.28);
+    }
+    .emotion-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; bottom: 28px; right: 28px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
+    .toast {
+      padding: 13px 20px; border-radius: 10px; color: #fff; font-size: 0.84rem; font-weight: 600;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      animation: toastIn 0.35s cubic-bezier(0.4,0,0.2,1);
+      max-width: 340px; line-height: 1.4; pointer-events: auto; backdrop-filter: blur(12px);
+    }
+    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+    .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .toast.info { background: linear-gradient(135deg, var(--accent), #7c3aed); }
+    .toast.warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+    @keyframes toastIn { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .toast.hiding { opacity: 0; transform: translateY(18px); transition: all 0.3s ease; }
+
+    /* ── 加载状态 ── */
+    .btn-loading { position: relative; pointer-events: none; opacity: 0.8; color: transparent !important; }
+    .btn-loading::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 18px; height: 18px; margin: -9px 0 0 -9px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 状态药丸 ── */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 600;
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .status-pill.success { background: var(--success-light); color: #059669; border-color: rgba(16,185,129,0.25); }
+    .status-pill.error { background: var(--danger-light); color: #dc2626; border-color: rgba(239,68,68,0.25); }
+    .status-pill.info { background: var(--accent-soft); color: var(--accent); border-color: rgba(99,102,241,0.2); }
+
+    /* ── 截图预览优化 ── */
+    #capPreview { border-radius: 10px; border: 1px dashed #cbd0da !important; background: var(--bg-input); }
+    #capPreview img { border-radius: 8px; }
+    #capPreview span { color: var(--text-muted) !important; }
+
+    @media (max-width: 768px) {
+      .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
+      body { padding: 14px; }
+      .header { flex-wrap: wrap; }
+      .tabs { width: 100%; overflow-x: auto; }
+    }
   </style>
 </head>
 <body>
@@ -100,6 +350,8 @@
     <div>
       <h1>VR N.E.K.O.cat · VRChat</h1>
       <div class="sub">N.E.K.O → AnyaDance → SteamVR → VRChat · <span id="portDisplay">39570</span> · <span id="stateSummary">就绪</span></div>
+      <div class="sub" style="margin-top:4px">最后操作: <span id="lastAction" class="status-pill info">等待操作</span></div>
+
     </div>
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('main')">总览</button>
@@ -130,7 +382,12 @@
       <div class="grid3">
         <div class="form-group"><label>UDP 主机</label><input type="text" id="cfgHost" value="127.0.0.1" onchange="markDirty()"></div>
         <div class="form-group"><label>UDP 端口</label><input type="number" id="cfgPort" value="39570" onchange="markDirty()"></div>
-        <div class="form-group"><label>流送速率 (Hz)</label><input type="number" id="cfgRate" value="60" onchange="markDirty()"></div>
+        <div class="form-group"><label>流送速率 (Hz)</label><input type="number" id="cfgRate" value="20" onchange="markDirty()"></div>
+      </div>
+      <div class="toggle-row" style="margin-top:10px">
+        <label class="toggle"><input type="checkbox" id="cfgSendHmd" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">发送 HMD</span>
+        <label class="toggle" style="margin-left:14px"><input type="checkbox" id="cfgSendControllers" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label" title="关闭可避免与真实手柄冲突">发送控制器</span>
+        <label class="toggle" style="margin-left:14px"><input type="checkbox" id="cfgSendTrackers" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">发送追踪器</span>
       </div>
     </div>
 
@@ -175,13 +432,14 @@
     <div class="card">
       <div class="card-title">快速动作</div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('nod_head',{count:1,speed:1})">点头</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('shake_head',{count:1,speed:1})">摇头</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('tilt_head',{direction:'left',amount:15})">歪头左</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('tilt_head',{direction:'right',amount:15})">歪头右</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('wave_hand',{side:'right',style:'hello'})">挥手</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('bow',{depth:30})">鞠躬</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('nod_head',{count:1,speed:1},'点头',null)">点头</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('shake_head',{count:1,speed:1},'摇头',null)">摇头</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('tilt_head',{direction:'left',amount:15},'歪头',null)">歪头左</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('tilt_head',{direction:'right',amount:15},'歪头',null)">歪头右</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('wave_hand',{side:'right',style:'hello'},'挥手',null)">挥手</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('bow',{depth:30},'鞠躬',null)">鞠躬</button>
       </div>
+
       <div class="toggle-row">
         <label class="toggle"><input type="checkbox" id="cfgIdle" onchange="toggleIdle(this.checked)"><span class="toggle-slider"></span></label>
         <span class="toggle-label">待机动画 (呼吸+微晃)</span>
@@ -194,67 +452,69 @@
     <div class="card">
       <div class="card-title">VRChat 标准手势 (Index 骨骼)</div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'neutral'})">L 默认</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'fist'})">L 握拳</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'hand_open'})">L 张开</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'point'})">L 食指</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'peace'})">L 剪刀</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'rock'})">L Rock</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'gun'})">L Gun</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'left',gesture:'thumbs_up'})">L 点赞</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'neutral'},'VRC 手势',null)">L 默认</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'fist'},'VRC 手势',null)">L 握拳</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'hand_open'},'VRC 手势',null)">L 张开</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'point'},'VRC 手势',null)">L 食指</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'peace'},'VRC 手势',null)">L 剪刀</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'rock'},'VRC 手势',null)">L Rock</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'gun'},'VRC 手势',null)">L Gun</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'thumbs_up'},'VRC 手势',null)">L 点赞</button>
       </div>
+
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'neutral'})">R 默认</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'fist'})">R 握拳</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'hand_open'})">R 张开</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'point'})">R 食指</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'peace'})">R 剪刀</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'rock'})">R Rock</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'gun'})">R Gun</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_gesture',{side:'right',gesture:'thumbs_up'})">R 点赞</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'neutral'},'VRC 手势',null)">R 默认</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'fist'},'VRC 手势',null)">R 握拳</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'hand_open'},'VRC 手势',null)">R 张开</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'point'},'VRC 手势',null)">R 食指</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'peace'},'VRC 手势',null)">R 剪刀</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'rock'},'VRC 手势',null)">R Rock</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'gun'},'VRC 手势',null)">R Gun</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'thumbs_up'},'VRC 手势',null)">R 点赞</button>
       </div>
-      <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="callEntry('vrc_gesture_both',{gesture:'neutral'})">双手默认</button><button class="btn btn-primary btn-sm" onclick="callEntry('vrc_gesture_both',{gesture:'fist'})">双手握拳</button><button class="btn btn-primary btn-sm" onclick="callEntry('vrc_gesture_both',{gesture:'hand_open'})">双手张开</button></div>
+
+      <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'neutral'},'VRC 双手势',null)">双手默认</button><button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'fist'},'VRC 双手势',null)">双手握拳</button><button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'hand_open'},'VRC 双手势',null)">双手张开</button></div>
     </div>
 
     <div class="card">
       <div class="card-title">VRChat 移动 (Locomotion)</div>
       <div class="btn-row">
-        <button class="btn btn-success btn-sm" onclick="callEntry('vrc_walk',{direction:'forward'})">前</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_walk',{direction:'backward'})">后</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_walk',{direction:'left'})">左</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_walk',{direction:'right'})">右</button>
-        <button class="btn btn-danger btn-sm" onclick="callEntry('vrc_stop_loco',{})">停止</button>
+        <button class="btn btn-success btn-sm" onclick="runAction('vrc_walk',{direction:'forward'},'行走',null)">前</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_walk',{direction:'backward'},'行走',null)">后</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_walk',{direction:'left'},'行走',null)">左</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_walk',{direction:'right'},'行走',null)">右</button>
+        <button class="btn btn-danger btn-sm" onclick="runAction('vrc_stop_loco',{},'停止移动',null)">停止</button>
       </div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_walk_for',{direction:'forward',duration:2})">走 2 秒</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_walk_for',{direction:'forward',duration:5})">走 5 秒</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_turn',{direction:'right',speed:0.5})">右转</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_turn',{direction:'left',speed:0.5})">左转</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_walk_for',{direction:'forward',duration:2},'行走',null)">走 2 秒</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_walk_for',{direction:'forward',duration:5},'行走',null)">走 5 秒</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_turn',{direction:'right',speed:0.5},'转向',null)">右转</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_turn',{direction:'left',speed:0.5},'转向',null)">左转</button>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">VRChat 交互</div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_pickup',{side:'right'})">R 拾取</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_drop',{side:'right'})">R 放下</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_jump',{})">跳跃</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_pickup',{side:'right'},'拾取',null)">R 拾取</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_drop',{side:'right'},'放下',null)">R 放下</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_jump',{},'跳跃',null)">跳跃</button>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">VRChat FBT 预设 & 动作</div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_sit',{})">坐下</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_crouch',{})">蹲下</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_handshake',{side:'right'})">握手</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_sit',{},'坐下',null)">坐下</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_crouch',{},'蹲下',null)">蹲下</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_handshake',{side:'right'},'握手',null)">握手</button>
       </div>
       <div class="btn-row" style="margin-top:10px">
         <span class="toggle-label">FBT 校准:</span>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_fbt_calibrate',{height:'short'})">矮(1.2m)</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_fbt_calibrate',{height:'medium'})">中(1.5m)</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_fbt_calibrate',{height:'tall'})">高(1.8m)</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vrc_fbt_calibrate',{height:'tower'})">极高(2.0m)</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'short'},'FBT 校准',null)">矮(1.2m)</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'medium'},'FBT 校准',null)">中(1.5m)</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'tall'},'FBT 校准',null)">高(1.8m)</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'tower'},'FBT 校准',null)">极高(2.0m)</button>
       </div>
     </div>
 
@@ -292,9 +552,9 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary btn-sm" onclick="lookAt()">注视</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('reset_head',{})">重置头部</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('reset_head',{},'重置头部',null)">重置头部</button>
         <button class="btn btn-success btn-sm" onclick="startTrack()">持续追踪</button>
-        <button class="btn btn-danger btn-sm" onclick="callEntry('stop_tracking',{})">停止追踪</button>
+        <button class="btn btn-danger btn-sm" onclick="runAction('stop_tracking',{},'停止追踪',null)">停止追踪</button>
       </div>
     </div>
     <div class="card">
@@ -337,22 +597,22 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary btn-sm" onclick="fakeFace()">模拟人脸</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_face_lost',{})">人脸丢失</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_face_lost',{},'人脸丢失',null)">人脸丢失</button>
       </div>
     </div>
     <div class="card">
       <div class="card-title">模拟表情/手势 (调试)</div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_expression',{expression:'happy',confidence:0.8})">Happy</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_expression',{expression:'sad',confidence:0.6})">Sad</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_expression',{expression:'angry',confidence:0.7})">Angry</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_expression',{expression:'surprise',confidence:0.9})">Surprise</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_expression',{expression:'happy',confidence:0.8},'模拟表情',null)">Happy</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_expression',{expression:'sad',confidence:0.6},'模拟表情',null)">Sad</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_expression',{expression:'angry',confidence:0.7},'模拟表情',null)">Angry</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_expression',{expression:'surprise',confidence:0.9},'模拟表情',null)">Surprise</button>
       </div>
       <div class="btn-row">
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_gesture',{gesture:'open',side:'right',confidence:0.9})">Open</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_gesture',{gesture:'fist',side:'right',confidence:0.8})">Fist</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_gesture',{gesture:'point',side:'right',confidence:0.7})">Point</button>
-        <button class="btn btn-outline btn-sm" onclick="callEntry('vision_gesture',{gesture:'thumbs_up',side:'right',confidence:0.9})">ThumbsUp</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_gesture',{gesture:'open',side:'right',confidence:0.9},'模拟手势',null)">Open</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_gesture',{gesture:'fist',side:'right',confidence:0.8},'模拟手势',null)">Fist</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_gesture',{gesture:'point',side:'right',confidence:0.7},'模拟手势',null)">Point</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vision_gesture',{gesture:'thumbs_up',side:'right',confidence:0.9},'模拟手势',null)">ThumbsUp</button>
       </div>
     </div>
     <div class="card">
@@ -380,35 +640,37 @@
   <!-- tab: driver -->
   <div class="tab-content" id="tab-driver">
     <div class="card">
-      <div class="card-title">AnyaDance 驱动状态</div>
+      <div class="card-title">SteamVR 驱动状态</div>
       <div class="grid2" style="margin-bottom:12px">
         <div class="info-box">
           驱动注册: <span class="highlight" id="drvRegistered">-</span>
         </div>
         <div class="info-box">
-          AnyaDance 进程: <span class="highlight" id="drvRunning">-</span>
+          vrpathreg: <span class="highlight" id="drvVrpathreg">-</span>
         </div>
       </div>
       <div class="info-box" id="drvDetail" style="margin-bottom:14px">-</div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="driverOneclick()">一键启动</button>
-        <button class="btn btn-outline" onclick="registerDriver()">注册驱动</button>
-        <button class="btn btn-outline" onclick="unregisterDriver()">注销驱动</button>
+        <button class="btn btn-primary" id="btnDriverOneclick" onclick="driverOneclick()">一键启动 (注册→重启SteamVR→流送)</button>
       </div>
       <div class="btn-row">
-        <button class="btn btn-success" onclick="startAnyaDance()">启动 AnyaDance</button>
-        <button class="btn btn-danger" onclick="stopAnyaDance()">停止 AnyaDance</button>
-        <button class="btn btn-warning" onclick="restartSteamVR()">重启 SteamVR</button>
+        <button class="btn btn-outline" id="btnRegisterDriver" onclick="registerDriver()">注册驱动</button>
+        <button class="btn btn-outline" id="btnUnregisterDriver" onclick="unregisterDriver()">注销驱动</button>
+        <button class="btn btn-warning" id="btnRestartSteamVR" onclick="restartSteamVR()">重启 SteamVR</button>
+      </div>
+
+      <div class="info-box" style="font-size:0.78rem;color:var(--text-secondary);margin-top:12px">
+        流程: 注册驱动(一次性) → 重启 SteamVR → 驱动自动加载并监听 UDP 端口 → 发送 UDP 包控制 avatar
       </div>
     </div>
     <div class="card">
-      <div class="card-title">AnyaDance 路径</div>
+      <div class="card-title">驱动目录路径</div>
       <div class="form-group">
-        <label>AnyaDance 目录路径 (含 AnyaDance.exe 和 driver.vrdrivermanifest)</label>
+        <label>AnyaDance 驱动目录（需包含 driver.vrdrivermanifest）</label>
         <input type="text" id="cfgAnyaDancePath" placeholder="自动检测中..." onchange="markDirty()">
       </div>
       <div class="info-box" style="font-size:0.78rem;color:var(--text-muted)">
-        自动检测路径：1) 插件目录下的 anyadance 文件夹；2) 插件目录同级的 anyadance 文件夹；3) 环境变量 ANYADANCE_ROOT。修改后需保存设置。
+        自动检测：插件目录下的 anyadance 文件夹。修改后需保存设置。
       </div>
     </div>
   </div>
@@ -416,32 +678,178 @@
   <div class="card">
     <div class="flex-between">
       <span id="dirtyHint" style="font-size:0.82rem;color:var(--warning);display:none">配置已修改，请保存</span>
-      <button class="btn btn-primary" onclick="saveSettings()" style="margin-left:auto">保存所有设置</button>
+      <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()" style="margin-left:auto">保存所有设置</button>
+
     </div>
   </div>
 
+  <div id="toastContainer" class="toast-container"></div>
+
 </div>
+
 
 <script>
 const PLUGIN_ID = 'vr_neko_cat';
+const RUNS_URL = '/runs';
+const RUN_POLL_MS = 300;
+const RUN_TIMEOUT_MS = 30000;
 let state = {}, dirty = false;
+
+function delay(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+
+function showToast(message, type, duration) {
+  type = type || 'info';
+  duration = duration || 3500;
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function () {
+    toast.classList.add('hiding');
+    setTimeout(function () { toast.remove(); }, 300);
+  }, duration);
+}
+
+function setBtnLoading(btn, loading) {
+  if (typeof btn === 'string') btn = document.getElementById(btn);
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.originalText = btn.textContent;
+    btn.classList.add('btn-loading');
+    btn.textContent = '...';
+  } else {
+    btn.classList.remove('btn-loading');
+    btn.textContent = btn.dataset.originalText || btn.textContent;
+  }
+}
 
 function markDirty() { dirty = true; document.getElementById('dirtyHint').style.display = 'inline'; }
 
-async function apiCall(method, params = {}) {
-  const resp = await fetch(`/api/plugin/${PLUGIN_ID}/${method}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  });
-  return resp.json();
+
+let lastActionText = '等待操作';
+let lastActionType = 'info';
+
+function setLastAction(text, type) {
+  lastActionText = text;
+  lastActionType = type || 'info';
+  var el = document.getElementById('lastAction');
+  if (el) {
+    el.textContent = text;
+    el.className = 'status-pill ' + lastActionType;
+  }
 }
-async function callEntry(id, params) { const r = await apiCall(id, params); refreshState(); return r; }
+
+async function runAction(entryId, params, label, btnId) {
+  label = label || entryId;
+  setBtnLoading(btnId, true);
+  setLastAction(label + ' 执行中...', 'info');
+  var r;
+  try {
+    r = await callEntry(entryId, params);
+  } catch (e) {
+    r = { ok: false, error: String(e.message || e) };
+  }
+  setBtnLoading(btnId, false);
+  if (r && (r.ok === false || r.success === false)) {
+    var err = r.error || r.message || r.stderr || '未知错误';
+    setLastAction(label + ' 失败: ' + err, 'error');
+    showToast(label + ' 失败: ' + err, 'error', 5000);
+  } else {
+
+    var extra = '';
+    if (r && typeof r === 'object' && r.status) extra = ' (' + r.status + ')';
+    setLastAction(label + ' 成功' + extra, 'success');
+    showToast(label + ' 成功' + extra, 'success');
+  }
+  await refreshState();
+  return r;
+}
+
+
+function fireEntry(id, params) {
+  fetch(RUNS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plugin_id: PLUGIN_ID, entry_id: id, args: params || {} })
+  }).then(function(r) {
+    if (!r.ok) { console.error('[fireEntry] POST /runs failed:', r.status); }
+  }).catch(function(err) {
+    console.error('[fireEntry] network error:', err.message || err);
+  });
+}
+
+async function callEntry(id, params) {
+  var argObj = params || {};
+  // POST /runs → 插件框架标准入口调用
+  var resp = await fetch(RUNS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plugin_id: PLUGIN_ID, entry_id: id, args: argObj })
+  });
+  if (!resp.ok) { console.error('runs POST failed:', resp.status); return { ok: false, error: 'runs create ' + resp.status }; }
+  var data = await resp.json();
+  var runId = data.run_id;
+  if (!runId) { console.error('no run_id', data); return { ok: false, error: 'no run_id' }; }
+
+  // 轮询 /runs/{run_id}
+  var deadline = Date.now() + RUN_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    var poll = await fetch(RUNS_URL + '/' + runId);
+    if (!poll.ok) { await delay(RUN_POLL_MS); continue; }
+    var rec = await poll.json();
+    if (rec.status === 'succeeded') {
+      var exp = await fetch(RUNS_URL + '/' + runId + '/export');
+      if (!exp.ok) { await delay(RUN_POLL_MS); continue; }
+      var ed = await exp.json();
+      var items = ed.items || [];
+      // 找 trigger_response 条目（TriggerResult 序列化）
+      var ti = items.find(function(x) { return x.label === 'trigger_response'; });
+      if (!ti) ti = items.find(function(x) { return x.type === 'json' && x.json; });
+      if (!ti) ti = items[0] || {};
+
+      var jsonData = ti.json || {};
+      // plugin_response 是 ok() 信封: {success:true, code:0, data:{...}, ...}
+      // data 里才是插件 entry 的实际返回值
+      var pr = jsonData.plugin_response || jsonData;
+      if (pr && pr.success) {
+        // 如果 data 里还有 value 包装（Ok dataclass 序列化），逐层解开
+        var actual = pr.data;
+        while (actual && typeof actual === 'object' && !Array.isArray(actual) &&
+               Object.keys(actual).length === 1 && actual.value !== undefined) {
+          actual = actual.value;
+        }
+        return actual;
+      }
+      // 返回错误时统一为 {ok:false, error: ...}
+      if (pr && pr.success === false) {
+        return { ok: false, error: pr.error || pr.message || pr.data || '插件返回错误' };
+      }
+      return pr;
+
+    }
+    if (rec.status === 'failed' || rec.status === 'canceled' || rec.status === 'timeout') {
+      console.error('run', rec.status, rec.error);
+      return { ok: false, error: (rec.error && rec.error.message) || rec.status };
+    }
+    await delay(RUN_POLL_MS);
+  }
+  console.error('run timeout');
+  return { ok: false, error: 'timeout' };
+}
 
 async function refreshState() {
   if (drag) return;
-  try { const r = await apiCall('get_dashboard_state'); if (r.ok) state = r.data; render(); }
-  catch (e) { console.error(e); }
+  try {
+    var r = await callEntry('get_dashboard_state', {});
+    // get_dashboard_state 返回的是完整状态对象（Ok 包装已被 callEntry 解开）
+    if (r && typeof r === 'object' && !Array.isArray(r)) {
+      state = r;
+    }
+    render();
+  } catch (e) { console.error(e); }
 }
+
 
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -456,7 +864,7 @@ function render() {
   const c = state.connection || {};
   document.getElementById('streamDot').className = 'status-dot ' + (c.streaming ? 'on' : 'off');
   document.getElementById('streamStatus').textContent = c.streaming ? '流送中' : '未流送';
-  document.getElementById('streamDetail').textContent = `${c.host||'127.0.0.1'}:${c.port||39570} @ ${c.stream_rate_hz||60}Hz`;
+  document.getElementById('streamDetail').textContent = `${c.host||'127.0.0.1'}:${c.port||39570} @ ${c.stream_rate_hz||20}Hz`;
   document.getElementById('portDisplay').textContent = c.port || 39570;
   document.getElementById('btnStartStream').style.display = c.streaming ? 'none' : '';
   document.getElementById('btnStopStream').style.display = c.streaming ? '' : 'none';
@@ -471,8 +879,11 @@ function render() {
   if (!dirty) {
     document.getElementById('cfgHost').value = c.host || '127.0.0.1';
     document.getElementById('cfgPort').value = c.port || 39570;
-    document.getElementById('cfgRate').value = c.stream_rate_hz || 60;
+    document.getElementById('cfgRate').value = c.stream_rate_hz || 20;
     const s = state.settings || {};
+    document.getElementById('cfgSendHmd').checked = s.send_hmd_pose !== false;
+    document.getElementById('cfgSendControllers').checked = s.send_controller_poses !== false;
+    document.getElementById('cfgSendTrackers').checked = s.send_tracker_poses !== false;
     document.getElementById('cfgMirrorHands').checked = s.mirror_hands || false;
     document.getElementById('cfgMirrorFeet').checked = s.mirror_feet || false;
     const dc = state.dance_config || {};
@@ -497,7 +908,7 @@ function render() {
   let dh = '<div class="grid3">';
   for (const [k, l] of Object.entries(deviceNames)) {
     const d = devices[k] || { position:[0,0,0], rotation:[0,0,0,1] };
-    dh += `<div class="device-section"><h4>${l}</h4><div class="pos-row">`;
+    dh += `<div class="device-section" data-device="${k}" oncontextmenu="return false" onpointerdown="startCardDrag(this,event)"><h4>${l}<span class="hint">左键移动 · 右键深度 · 中键旋转 · 长按移动</span></h4><div class="pos-row">`;
     ['X','Y','Z'].forEach((a, i) => { dh += `<div class="form-group"><label>${a}</label><input type="number" data-device="${k}" data-type="pos" data-axis="${i}" value="${d.position[i].toFixed(3)}" step="0.001" onchange="commitDevicePos('${k}')" onpointerdown="startDrag(this,event)"></div>`; });
     dh += `</div><div class="pos-row" style="margin-top:8px">`;
     ['RX','RY','RZ','RW'].forEach((a, i) => { dh += `<div class="form-group"><label>${a}</label><input type="number" data-device="${k}" data-type="rot" data-axis="${i}" value="${d.rotation[i].toFixed(4)}" step="0.01" onchange="commitDeviceRot('${k}')" onpointerdown="startDrag(this,event)"></div>`; });
@@ -533,7 +944,7 @@ function render() {
   const avEmo = emo.available_emotions || [];
   document.getElementById('emotionChips').innerHTML = avEmo.map(em => {
     const act = em === (emo.current_emotion || 'neutral') ? ' active' : '';
-    return `<span class="emotion-chip${act}" onclick="callEntry('set_emotion',{emotion:'${em}',intensity:parseFloat(document.getElementById('emoIntensity').value)})">${em}</span>`;
+    return `<span class="emotion-chip${act}" onclick="runAction('set_emotion',{emotion:'${em}',intensity:parseFloat(document.getElementById('emoIntensity').value)},'设置情感',null)">${em}</span>`;
   }).join('');
   document.getElementById('emoIntensity').value = emo.intensity || 1.0;
   document.getElementById('emotionState').textContent =
@@ -572,35 +983,47 @@ function render() {
   const drv = state.driver || {};
   document.getElementById('drvRegistered').textContent = drv.driver_registered ? '已注册' : '未注册';
   document.getElementById('drvRegistered').style.color = drv.driver_registered ? 'var(--success)' : 'var(--text-muted)';
-  document.getElementById('drvRunning').textContent = drv.anyadance_running ? '运行中' : '未运行';
-  document.getElementById('drvRunning').style.color = drv.anyadance_running ? 'var(--success)' : 'var(--text-muted)';
+  document.getElementById('drvVrpathreg').textContent = drv.vrpathreg_found ? '已找到' : '未找到';
+  document.getElementById('drvVrpathreg').style.color = drv.vrpathreg_found ? 'var(--success)' : 'var(--text-muted)';
   document.getElementById('drvDetail').textContent =
-    `路径: ${drv.anyadance_path||'未找到'} | EXE: ${drv.anyadance_exe||'未找到'} | vrpathreg: ${drv.vrpathreg_found?'已找到':'未找到'}`;
+    `驱动目录: ${drv.driver_dir||'未找到'}`;
   if (!dirty) {
-    document.getElementById('cfgAnyaDancePath').value = drv.anyadance_path || '';
+    document.getElementById('cfgAnyaDancePath').value = drv.driver_dir || '';
   }
 }
 
-async function startStream() { await callEntry('start_stream',{}); }
-async function stopStream() { await callEntry('stop_stream',{}); }
-async function sendPacket() { await callEntry('send_single_packet',{}); }
-async function applyPreset(n) { await callEntry('apply_preset',{preset:n}); }
-async function mirrorHands() { await callEntry('mirror_hands',{enabled:true}); }
-async function mirrorFeet() { await callEntry('mirror_feet',{enabled:true}); }
-async function playDance() { await callEntry('play_dance',{vmd_path:document.getElementById('cfgDanceVmd').value}); }
-async function stopDance() { await callEntry('stop_dance',{}); }
-async function handGesture(s,g) { await callEntry('hand_gesture',{side:s,gesture:g}); }
-async function resetInputs(s) { await callEntry('reset_inputs',{side:s}); }
-async function toggleIdle(on) { await callEntry(on?'start_idle':'stop_idle',{}); }
-async function setEmotionText() { const em = document.querySelector('.emotion-chip.active'); const ename = em ? em.textContent : 'neutral'; await callEntry('set_emotion',{emotion:ename,intensity:parseFloat(document.getElementById('emoIntensity').value)}); }
+async function startStream() { await runAction('start_stream', {}, '开始流送', 'btnStartStream'); }
+async function stopStream() { await runAction('stop_stream', {}, '停止流送', 'btnStopStream'); }
+async function sendPacket() { await runAction('send_single_packet', {}, '发送单次数据包', null); }
+async function applyPreset(n) { await runAction('apply_preset', {preset:n}, '应用预设', null); }
+async function mirrorHands() { await runAction('mirror_hands', {enabled:true}, '镜像手部', null); }
+async function mirrorFeet() { await runAction('mirror_feet', {enabled:true}, '镜像脚部', null); }
+async function playDance() { await runAction('play_dance', {vmd_path:document.getElementById('cfgDanceVmd').value}, '播放舞蹈', null); }
+async function stopDance() { await runAction('stop_dance', {}, '停止舞蹈', null); }
+async function handGesture(s,g) { await runAction('hand_gesture', {side:s,gesture:g}, '手势', null); }
+async function resetInputs(s) { await runAction('reset_inputs', {side:s}, '重置输入', null); }
+async function toggleIdle(on) { await runAction(on?'start_idle':'stop_idle', {}, '待机动画', null); }
+async function setEmotionText() { const em = document.querySelector('.emotion-chip.active'); const ename = em ? em.textContent : 'neutral'; await runAction('set_emotion', {emotion:ename,intensity:parseFloat(document.getElementById('emoIntensity').value)}, '设置情感', null); }
+
 
 let drag = null;
+let lastCardCommit = 0;
+let cardLongPress = null;
+const CARD_COMMIT_INTERVAL_MS = 50;
+const LONG_PRESS_MS = 600;
+const LONG_PRESS_MOVE_THRESHOLD = 10;
+
 
 function startDrag(input, ev) {
-  // 只响应鼠标主键或笔/触摸的 pointer
   if (ev.pointerType === 'mouse' && ev.button !== 0) return;
   if (drag) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  input.blur();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) sel.removeAllRanges();
   drag = {
+    mode: 'value',
     input,
     type: input.dataset.type,
     device: input.dataset.device,
@@ -613,30 +1036,167 @@ function startDrag(input, ev) {
   };
   input.classList.add('dragging');
   try { input.setPointerCapture(ev.pointerId); } catch {}
-  ev.preventDefault();
-  ev.stopPropagation();
 }
 
+
+function startCardDrag(card, ev) {
+  if (ev.target.closest('input')) return;
+  if (drag) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) sel.removeAllRanges();
+
+  if (ev.pointerType !== 'mouse') {
+    startCardLongPress(card, ev);
+    return;
+  }
+
+  let mode = null;
+  if (ev.button === 0) mode = ev.shiftKey ? 'rotate' : 'move';
+  else if (ev.button === 2) mode = ev.shiftKey ? 'rotate' : 'depth';
+  else if (ev.button === 1) mode = 'rotate';
+  if (!mode) return;
+  beginCardDrag(card, ev, mode);
+}
+
+function startCardLongPress(card, ev) {
+  cardLongPress = {
+    card,
+    startX: ev.clientX,
+    startY: ev.clientY,
+    pointerId: ev.pointerId,
+    timer: setTimeout(() => {
+      const lp = cardLongPress;
+      cardLongPress = null;
+      if (lp) beginCardDrag(lp.card, ev, 'move');
+    }, LONG_PRESS_MS)
+  };
+}
+
+function cancelCardLongPress(pointerId) {
+  if (!cardLongPress || cardLongPress.pointerId !== pointerId) return;
+  clearTimeout(cardLongPress.timer);
+  cardLongPress = null;
+}
+
+function beginCardDrag(card, ev, mode) {
+  const dev = card.dataset.device;
+  const pos = readDevicePos(dev);
+  const rot = readDeviceRot(dev);
+  drag = {
+    mode,
+    card,
+    device: dev,
+    startX: ev.clientX,
+    startY: ev.clientY,
+    startPos: pos.slice(),
+    startRot: rot.slice(),
+    pointerId: ev.pointerId,
+    baseSensitivity: mode === 'rotate' ? 0.5 : 0.01,
+    pending: false
+  };
+  card.classList.add('card-drag', mode);
+  try { card.setPointerCapture(ev.pointerId); } catch {}
+}
+
+
+
+function readDevicePos(dev) {
+  const pos = [0,0,0];
+  document.querySelectorAll(`input[data-device="${dev}"][data-type="pos"]`).forEach(inp => {
+    pos[parseInt(inp.dataset.axis)] = parseFloat(inp.value) || 0;
+  });
+  return pos;
+}
+
+function readDeviceRot(dev) {
+  const rot = [0,0,0,1];
+  document.querySelectorAll(`input[data-device="${dev}"][data-type="rot"]`).forEach(inp => {
+    rot[parseInt(inp.dataset.axis)] = parseFloat(inp.value) || 0;
+  });
+  return rot;
+}
+
+function writeDevicePos(dev, pos) {
+  document.querySelectorAll(`input[data-device="${dev}"][data-type="pos"]`).forEach(inp => {
+    inp.value = pos[parseInt(inp.dataset.axis)].toFixed(3);
+  });
+}
+
+function writeDeviceRot(dev, rot) {
+  document.querySelectorAll(`input[data-device="${dev}"][data-type="rot"]`).forEach(inp => {
+    inp.value = rot[parseInt(inp.dataset.axis)].toFixed(4);
+  });
+}
+
+// 拖拽过程中禁止文字选择
+document.addEventListener('selectstart', (ev) => {
+  if (drag) ev.preventDefault();
+});
+
 document.addEventListener('pointermove', (ev) => {
+  if (cardLongPress && ev.pointerId === cardLongPress.pointerId) {
+    const dx = ev.clientX - cardLongPress.startX;
+    const dy = ev.clientY - cardLongPress.startY;
+    if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      clearTimeout(cardLongPress.timer);
+      cardLongPress = null;
+    }
+  }
   if (!drag || ev.pointerId !== drag.pointerId) return;
+
+  if (drag.mode === 'value') {
+    const dx = ev.clientX - drag.startX;
+    const dy = ev.clientY - drag.startY;
+    const fine = ev.shiftKey;
+    const sensitivity = fine ? drag.baseSensitivity * 0.1 : drag.baseSensitivity;
+    const delta = fine ? -dy * sensitivity : dx * sensitivity;
+    const decimals = drag.type === 'pos' ? 3 : 4;
+    const newValue = drag.startValue + delta;
+    const text = newValue.toFixed(decimals);
+    if (drag.input.value !== text) drag.input.value = text;
+    return;
+  }
+
   const dx = ev.clientX - drag.startX;
   const dy = ev.clientY - drag.startY;
   const fine = ev.shiftKey;
-  const sensitivity = fine ? drag.baseSensitivity * 0.1 : drag.baseSensitivity;
-  // 默认水平拖拽；按住 Shift 时改为垂直拖拽（更精细）
-  const delta = fine ? -dy * sensitivity : dx * sensitivity;
-  const decimals = drag.type === 'pos' ? 3 : 4;
-  const newValue = drag.startValue + delta;
-  const text = newValue.toFixed(decimals);
-  if (drag.input.value !== text) drag.input.value = text;
+  const sens = fine ? drag.baseSensitivity * 0.2 : drag.baseSensitivity;
+  const dev = drag.device;
+
+  if (drag.mode === 'move') {
+    const pos = drag.startPos.slice();
+    pos[0] += dx * sens;
+    pos[1] -= dy * sens;
+    writeDevicePos(dev, pos);
+  } else if (drag.mode === 'depth') {
+    const pos = drag.startPos.slice();
+    pos[2] += dy * sens;
+    writeDevicePos(dev, pos);
+  } else if (drag.mode === 'rotate') {
+    const rot = drag.startRot.slice();
+    rot[1] += dx * sens;
+    rot[0] -= dy * sens;
+    writeDeviceRot(dev, rot);
+  }
+
+  const now = Date.now();
+  if (now - lastCardCommit >= CARD_COMMIT_INTERVAL_MS && !drag.pending) {
+    drag.pending = true;
+    lastCardCommit = now;
+    commitDevicePose(dev, false).finally(() => { if (drag) drag.pending = false; });
+  }
 });
 
 document.addEventListener('pointerup', (ev) => {
+  cancelCardLongPress(ev.pointerId);
   if (!drag || ev.pointerId !== drag.pointerId) return;
   cleanupDrag(true);
 });
 
 document.addEventListener('pointercancel', (ev) => {
+  cancelCardLongPress(ev.pointerId);
   if (!drag || ev.pointerId !== drag.pointerId) return;
   cleanupDrag(false);
 });
@@ -644,16 +1204,43 @@ document.addEventListener('pointercancel', (ev) => {
 function cleanupDrag(commit) {
   if (!drag) return;
   const d = drag;
-  const decimals = d.type === 'pos' ? 3 : 4;
-  const changed = d.input.value !== d.startValue.toFixed(decimals);
-  d.input.classList.remove('dragging');
-  try { d.input.releasePointerCapture(d.pointerId); } catch {}
-  drag = null;
-  if (commit && changed) {
-    if (d.type === 'pos') commitDevicePos(d.device, true);
-    else commitDeviceRot(d.device, true);
+  if (d.mode === 'value') {
+    const decimals = d.type === 'pos' ? 3 : 4;
+    const changed = d.input.value !== d.startValue.toFixed(decimals);
+    d.input.classList.remove('dragging');
+    try { d.input.releasePointerCapture(d.pointerId); } catch {}
+    drag = null;
+    if (commit && changed) {
+      if (d.type === 'pos') commitDevicePos(d.device, true);
+      else commitDeviceRot(d.device, true);
+    }
+    return;
   }
+
+  d.card.classList.remove('card-drag', d.mode);
+  try { d.card.releasePointerCapture(d.pointerId); } catch {}
+  drag = null;
+  if (commit) commitDevicePose(d.device, true);
 }
+
+document.getElementById('devicePoses').addEventListener('wheel', (ev) => {
+  const card = ev.target.closest('.device-section');
+  if (!card || document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  ev.preventDefault();
+  const dev = card.dataset.device;
+  const delta = Math.sign(ev.deltaY) * (ev.shiftKey ? 0.05 : 0.02);
+  if (ev.shiftKey) {
+    const rot = readDeviceRot(dev);
+    rot[2] += delta;
+    writeDeviceRot(dev, rot);
+    commitDeviceRot(dev, true);
+  } else {
+    const pos = readDevicePos(dev);
+    pos[2] += delta;
+    writeDevicePos(dev, pos);
+    commitDevicePos(dev, true);
+  }
+}, { passive: false });
 
 async function setDevicePos(dev, axis, val) {
   const input = document.querySelector(`input[data-device="${dev}"][data-type="pos"][data-axis="${axis}"]`);
@@ -668,53 +1255,65 @@ async function setDeviceRot(dev, axis, val) {
 }
 
 function commitDevicePos(dev, flush = true) {
-  const pos = [0,0,0];
-  document.querySelectorAll(`input[data-device="${dev}"][data-type="pos"]`).forEach(inp => {
-    pos[parseInt(inp.dataset.axis)] = parseFloat(inp.value) || 0;
-  });
-  if (flush) return callEntry('set_device_pose',{device:dev,position_x:pos[0],position_y:pos[1],position_z:pos[2]});
-  return Promise.resolve({ok:true});
+  const pos = readDevicePos(dev);
+  const params = { device: dev, position_x: pos[0], position_y: pos[1], position_z: pos[2] };
+  if (flush) return runAction('set_device_pose', params, '设置位姿', null);
+  fireEntry('set_device_pose', params);
+  return Promise.resolve({ ok: true });
 }
 
 function commitDeviceRot(dev, flush = true) {
-  const rot = [0,0,0,1];
-  document.querySelectorAll(`input[data-device="${dev}"][data-type="rot"]`).forEach(inp => {
-    rot[parseInt(inp.dataset.axis)] = parseFloat(inp.value) || 0;
-  });
-  if (flush) return callEntry('set_device_pose',{device:dev,rotation_x:rot[0],rotation_y:rot[1],rotation_z:rot[2],rotation_w:rot[3]});
-  return Promise.resolve({ok:true});
+  const rot = readDeviceRot(dev);
+  const params = { device: dev, rotation_x: rot[0], rotation_y: rot[1], rotation_z: rot[2], rotation_w: rot[3] };
+  if (flush) return runAction('set_device_pose', params, '设置旋转', null);
+  fireEntry('set_device_pose', params);
+  return Promise.resolve({ ok: true });
 }
 
-async function setFinger(side, finger, val) { const b = {thumb:0,index:0,middle:0,ring:0,pinky:0}; b[finger] = parseFloat(val); await callEntry('set_finger_bends',{side,...b}); }
+function commitDevicePose(dev, flush = true) {
+  const pos = readDevicePos(dev);
+  const rot = readDeviceRot(dev);
+  const params = {
+    device: dev,
+    position_x: pos[0], position_y: pos[1], position_z: pos[2],
+    rotation_x: rot[0], rotation_y: rot[1], rotation_z: rot[2], rotation_w: rot[3]
+  };
+  if (flush) return runAction('set_device_pose', params, '设置位姿', null);
+  fireEntry('set_device_pose', params);
+  return Promise.resolve({ ok: true });
+}
 
-async function lookAt() { const x=parseFloat(document.getElementById('lookX').value),y=parseFloat(document.getElementById('lookY').value),z=parseFloat(document.getElementById('lookZ').value); await callEntry('look_at',{x,y,z}); }
-async function lookAtDir() { await callEntry('look_at_direction',{yaw:parseFloat(document.getElementById('angleYaw').value),pitch:parseFloat(document.getElementById('anglePitch').value)}); }
-async function startTrack() { const x=parseFloat(document.getElementById('lookX').value),y=parseFloat(document.getElementById('lookY').value),z=parseFloat(document.getElementById('lookZ').value); await callEntry('start_tracking',{x,y,z}); }
+async function setFinger(side, finger, val) { const b = {thumb:0,index:0,middle:0,ring:0,pinky:0}; b[finger] = parseFloat(val); await runAction('set_finger_bends', {side,...b}, '设置手指', null); }
 
-async function fakeFace() { const sx=parseFloat(document.getElementById('fakeFaceX').value),sy=parseFloat(document.getElementById('fakeFaceY').value),d=parseFloat(document.getElementById('fakeFaceD').value); await callEntry('vision_face',{screen_x:sx,screen_y:sy,distance:d}); }
-async function saveVisionCfg() { await callEntry('vision_config',{camera_fov_h:parseFloat(document.getElementById('visFovH').value),camera_fov_v:parseFloat(document.getElementById('visFovV').value),tracking_smooth:parseFloat(document.getElementById('visSmooth').value),look_distance:parseFloat(document.getElementById('visDist').value),react_to_expression:document.getElementById('visReactExpr').checked,react_to_gesture:document.getElementById('visReactGesture').checked}); }
+async function lookAt() { const x=parseFloat(document.getElementById('lookX').value),y=parseFloat(document.getElementById('lookY').value),z=parseFloat(document.getElementById('lookZ').value); await runAction('look_at', {x,y,z}, '注视目标', null); }
+async function lookAtDir() { await runAction('look_at_direction', {yaw:parseFloat(document.getElementById('angleYaw').value),pitch:parseFloat(document.getElementById('anglePitch').value)}, '设置朝向', null); }
+async function startTrack() { const x=parseFloat(document.getElementById('lookX').value),y=parseFloat(document.getElementById('lookY').value),z=parseFloat(document.getElementById('lookZ').value); await runAction('start_tracking', {x,y,z}, '开始追踪', null); }
+
+async function fakeFace() { const sx=parseFloat(document.getElementById('fakeFaceX').value),sy=parseFloat(document.getElementById('fakeFaceY').value),d=parseFloat(document.getElementById('fakeFaceD').value); await runAction('vision_face', {screen_x:sx,screen_y:sy,distance:d}, '模拟人脸', null); }
+async function saveVisionCfg() { await runAction('vision_config', {camera_fov_h:parseFloat(document.getElementById('visFovH').value),camera_fov_v:parseFloat(document.getElementById('visFovV').value),tracking_smooth:parseFloat(document.getElementById('visSmooth').value),look_distance:parseFloat(document.getElementById('visDist').value),react_to_expression:document.getElementById('visReactExpr').checked,react_to_gesture:document.getElementById('visReactGesture').checked}, '保存视觉配置', null); }
 
 async function saveSettings() {
-  const r = await callEntry('save_settings', {
+  const r = await runAction('save_settings', {
     host: document.getElementById('cfgHost').value,
     port: parseInt(document.getElementById('cfgPort').value),
     stream_rate_hz: parseInt(document.getElementById('cfgRate').value),
+    send_hmd_pose: document.getElementById('cfgSendHmd').checked,
+    send_controller_poses: document.getElementById('cfgSendControllers').checked,
+    send_tracker_poses: document.getElementById('cfgSendTrackers').checked,
     mirror_hands: document.getElementById('cfgMirrorHands').checked,
     mirror_feet: document.getElementById('cfgMirrorFeet').checked,
     dance_height: parseFloat(document.getElementById('cfgDanceHeight').value),
     dance_speed: parseFloat(document.getElementById('cfgDanceSpeed').value),
     dance_vmd_path: document.getElementById('cfgDanceVmd').value,
     anyadance_path: document.getElementById('cfgAnyaDancePath').value,
-  });
-  if (r.ok) { dirty = false; document.getElementById('dirtyHint').style.display = 'none'; }
+  }, '保存设置', 'btnSaveSettings');
+  if (r && !r.error) { dirty = false; document.getElementById('dirtyHint').style.display = 'none'; }
 }
 
-async function registerDriver() { await callEntry('register_driver',{}); }
-async function unregisterDriver() { await callEntry('unregister_driver',{}); }
-async function startAnyaDance() { await callEntry('start_anyadance',{}); }
-async function stopAnyaDance() { await callEntry('stop_anyadance',{}); }
-async function restartSteamVR() { await callEntry('restart_steamvr',{}); }
-async function driverOneclick() { await callEntry('driver_oneclick',{}); }
+async function registerDriver() { await runAction('register_driver', {}, '注册驱动', 'btnRegisterDriver'); }
+async function unregisterDriver() { await runAction('unregister_driver', {}, '注销驱动', 'btnUnregisterDriver'); }
+async function restartSteamVR() { await runAction('restart_steamvr', {}, '重启 SteamVR', 'btnRestartSteamVR'); }
+async function driverOneclick() { await runAction('driver_oneclick', {}, '一键启动', 'btnDriverOneclick'); }
 
 async function captureScreen() {
   document.getElementById('capStatus').textContent = '截图中...';
@@ -722,16 +1321,20 @@ async function captureScreen() {
   const quality = parseInt(document.getElementById('capQuality').value);
   const scale = parseFloat(document.getElementById('capScale').value);
   const r = await callEntry('vision_capture', {monitor_index: mi, quality: quality, scale: scale});
-  if (r.ok && r.data && r.data.ok) {
-    const d = r.data;
+  if (r && r.ok && r.image_base64) {
     document.getElementById('capStatus').textContent =
-      `${d.width}x${d.height}, ${d.size_kb}KB, ${d.elapsed_ms}ms`;
+      `${r.width}x${r.height}, ${r.size_kb}KB, ${r.elapsed_ms}ms`;
     const preview = document.getElementById('capPreview');
-    preview.innerHTML = `<img src="data:image/jpeg;base64,${d.image_base64}" style="max-width:100%;height:auto;border-radius:6px" alt="游戏截图">`;
+    preview.innerHTML = `<img src="data:image/jpeg;base64,${r.image_base64}" style="max-width:100%;height:auto;border-radius:6px" alt="游戏截图">`;
+    showToast('截图成功', 'success');
   } else {
-    document.getElementById('capStatus').textContent = '截图失败';
+    var capErr = (r && (r.error || r.message)) ? ': ' + (r.error || r.message) : '';
+    document.getElementById('capStatus').textContent = '截图失败' + capErr;
+    showToast('截图失败' + capErr, 'error');
   }
+
 }
+
 
 refreshState();
 setInterval(refreshState, 2000);

@@ -48,7 +48,18 @@ class VrPoseService:
         preset = self.PRESETS.get(preset_name)
         if not preset:
             return
+        cfg = self._config
+        send_hmd = bool(cfg.get("send_hmd_pose", True))
+        send_controllers = bool(cfg.get("send_controller_poses", True))
+        send_trackers = bool(cfg.get("send_tracker_poses", True))
+
         for dev_key, preset_key in zip(self.DEVICE_KEYS, self.PRESET_KEYS):
+            if dev_key == "hmd_pose" and not send_hmd:
+                continue
+            if dev_key in ("left_controller_pose", "right_controller_pose") and not send_controllers:
+                continue
+            if dev_key in ("hip_pose", "left_foot_pose", "right_foot_pose") and not send_trackers:
+                continue
             values = preset.get(preset_key)
             if values is None:
                 continue

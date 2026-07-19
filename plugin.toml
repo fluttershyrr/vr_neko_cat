@@ -36,7 +36,7 @@ permissions = ["state:read"]
 
 [plugin_runtime]
 enabled = true
-auto_start = false
+auto_start = true
 
 [plugin.store]
 enabled = true

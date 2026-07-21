@@ -1,3 +1,7 @@
+注意本插件未开发完全仅供参考
+
+
+
 # VR N.E.K.O.cat
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)

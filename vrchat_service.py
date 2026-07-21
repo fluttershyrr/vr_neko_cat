@@ -73,7 +73,7 @@ class VrChatService:
     def walk(self, direction: str = "forward") -> dict[str, Any]:
         """通过左摇杆控制 VRChat 角色移动方向。"""
         speed = {
-            "forward": (0.0, 1.0), "backward": (0.0, -1.0),
+            "forward": (0.0, -1.0), "backward": (0.0, 1.0),  # Y轴负=向前
             "left": (-1.0, 0.0), "right": (1.0, 0.0),
         }
         x, y = speed.get(direction, (0.0, 0.0))
@@ -92,13 +92,38 @@ class VrChatService:
         return {"locomotion": "stopped"}
 
     async def _loco_loop(self, direction: str, duration: float) -> None:
-        """定时移动：行走 duration 秒后自动停止。"""
+        """定时移动：行走 duration 秒后自动停止。每帧显式发送 UDP 确保摇杆值不被覆盖。"""
         self.walk(direction)
-        await asyncio.sleep(duration)
+        # 立即发送第一帧 UDP（含初始摇杆值）
+        await self.udp_svc.send()
+        elapsed = 0.0
+        tick = 0.05  # 20Hz 发送频率
+        while elapsed < duration:
+            await asyncio.sleep(tick)
+            elapsed += tick
+            # 重新设置摇杆值确保状态保持（防止被其他操作覆盖）
+            if direction == "forward":
+                self.input_svc.set_joystick("left", 0, -1.0)
+            elif direction == "backward":
+                self.input_svc.set_joystick("left", 0, 1.0)
+            elif direction == "left":
+                self.input_svc.set_joystick("left", -1.0, 0)
+            elif direction == "right":
+                self.input_svc.set_joystick("left", 1.0, 0)
+            # 显式发送 UDP 包，不依赖 _stream_loop 的时序
+            await self.udp_svc.send()
         self.stop_locomotion()
+        # 发送最后一帧：摇杆归零
+        await self.udp_svc.send()
         self._locomoting = False
 
     async def walk_for(self, direction: str = "forward", duration: float = 2.0) -> dict[str, Any]:
+        """带持续UDP发送的移动控制（防止SteamVR崩溃）"""
+        # 确保流送已启动
+        ensure_fn = getattr(self.plugin, '_ensure_streaming', None)
+        if ensure_fn:
+            await ensure_fn("walk_for")
+        
         self._locomoting = True
         if self._locomotion_task and not self._locomotion_task.done():
             self._locomotion_task.cancel()

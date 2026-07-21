@@ -3,9 +3,9 @@ id = "vr_neko_cat"
 name = "VR N.E.K.O.cat"
 description = "N.E.K.O VRChat 全功能插件 — UDP → AnyaDance → SteamVR → VRChat FBT/手势/情感/舞蹈/视觉/移动"
 short_description = "N.E.K.O virtual avatar in VRChat: FBT, gestures, emotions, dance, locomotion via AnyaDance/SteamVR"
-keywords = ["VRChat", "VR", "AnyaDance", "FBT", "全身追踪", "手势", "舞蹈", "MMD", "情感", "N.E.K.O"]
+keywords = ["VRChat", "VR", "FBT", "全身追踪", "手势", "舞蹈", "MMD", "情感", "N.E.K.O"]
 version = "2.1.0"
-entry = "plugins.vr_neko_cat:VRControllerPlugin"
+entry = "plugins.vr_neko_cat:VrNekoCatPlugin"
 
 [plugin.author]
 name = "N.E.K.O Team"

@@ -146,6 +146,8 @@ class VrDanceService:
                 self._playing = False
 
     async def play(self, vmd_path: str = "") -> bool:
+        if self._playing:
+            await self.stop()
         path = vmd_path or self._config.get("dance_vmd_path", "")
         if not path or not os.path.exists(path):
             self.plugin.logger.error(f"VMD 文件不存在: {path}")

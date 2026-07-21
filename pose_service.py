@@ -84,11 +84,17 @@ class VrPoseService:
         self._config[key].update({"rotation_x": float(rx), "rotation_y": float(ry), "rotation_z": float(rz), "rotation_w": float(rw)})
 
     def move_relative(self, device: str, dx: float, dy: float, dz: float) -> None:
+        """移动设备（带边界检查防止SteamVR崩溃）。"""
         key = f"{device}_pose"
         cfg = self._config.setdefault(key, {})
-        cfg["position_x"] = cfg.get("position_x", 0.0) + float(dx)
-        cfg["position_y"] = cfg.get("position_y", 0.0) + float(dy)
-        cfg["position_z"] = cfg.get("position_z", 0.0) + float(dz)
+        
+        # 边界限制：防止坐标超出安全范围
+        MAX_POS_XZ = 9.5
+        MAX_POS_Y = 1.8
+        
+        cfg["position_x"] = max(-MAX_POS_XZ, min(MAX_POS_XZ, cfg.get("position_x", 0.0) + float(dx)))
+        cfg["position_y"] = max(0.0, min(MAX_POS_Y, cfg.get("position_y", 0.0) + float(dy)))  # Y轴不能为负
+        cfg["position_z"] = max(-MAX_POS_XZ, min(MAX_POS_XZ, cfg.get("position_z", 0.0) + float(dz)))
 
     def rotate_yaw(self, device: str, degrees: float) -> None:
         key = f"{device}_pose"

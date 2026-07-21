@@ -9,20 +9,7 @@ from typing import Any
 
 
 class VrDriverService:
-    """SteamVR 驱动管理：注册/注销 AnyaDance 驱动 + SteamVR 重启。
-
-    工作流程：
-    1. 注册驱动到 SteamVR（一次性操作，通过 vrpathreg adddriver）
-    2. 重启 SteamVR，驱动自动加载并监听 UDP 端口
-    3. 通过 UDP 协议包控制 avatar 行为
-
-    不需要手动启停 AnyaDance.exe——SteamVR 启动时会自动加载驱动。
-
-    性能优化：
-    - 驱动目录 / vrpathreg 路径在插件启动时扫描一次并持久化到配置；
-    - 后续 get_driver_state 轮询直接从配置读取，不再重复扫描文件系统。
-    """
-
+    
     _PERSIST_KEY_DRIVER_DIR = "_persisted_driver_dir"
     _PERSIST_KEY_VRPATHREG = "_persisted_vrpathreg_path"
 
@@ -78,60 +65,168 @@ class VrDriverService:
         self._scanned_at_startup = True
 
     def _do_scan_driver_dir(self) -> str:
-        """实际扫描一次驱动目录（不缓存，不写配置）。"""
-        # 优先用户配置
-        path = self._config.get("anyadance_path", "")
-        if path and (Path(path) / "driver.vrdrivermanifest").exists():
-            return str(Path(path).resolve())
 
         plugin_dir = self._plugin_dir()
-        workspace_root = plugin_dir
-        for _ in range(6):
-            if (workspace_root / "anyadance").is_dir():
-                break
-            parent = workspace_root.parent
-            if parent == workspace_root:
-                break
-            workspace_root = parent
+        
+        self.plugin.logger.info(f"[driver] 开始扫描驱动目录...")
+        self.plugin.logger.info(f"[driver] plugin_dir = {plugin_dir}")
+        self.plugin.logger.info(f"[dir] cwd = {Path.cwd()}")
+        self.plugin.logger.info(f"[env] ANYADANCE_ROOT = {os.environ.get('ANYADANCE_ROOT', '(未设置)')}")
+        self.plugin.logger.info(f"[env] STEAMVR_ROOT = {os.environ.get('STEAMVR_ROOT', '(未设置)')}")
 
-        candidates = [
-            plugin_dir / "anyadance",
-            workspace_root / "anyadance",
-            Path(os.environ.get("ANYADANCE_ROOT", "")),
-            Path.cwd() / "anyadance",
-        ]
-        for d in candidates:
-            if d and d.is_dir() and (d / "driver.vrdrivermanifest").exists():
-                return str(d.resolve())
+        # ── 策略1: 用户配置 ──
+        path = self._config.get("anyadance_path", "")
+        if path:
+            p = Path(path)
+            manifest = p / "driver.vrdrivermanifest"
+            self.plugin.logger.debug(f"[driver] 检查 anyadance_path: {path}")
+            if manifest.exists():
+                resolved = str(p.resolve())
+                self.plugin.logger.info(f"[driver] ✓ 配置 anyadance_path 有效: {resolved} (manifest={manifest})")
+                return resolved
+            else:
+                self.plugin.logger.warning(
+                    f"[driver] ✗ 配置的 anyadance_path 无效 (manifest不存在): {path}"
+                    f"\n  实际: path exists={p.is_dir()}, manifest exists={manifest.exists()}"
+                )
 
+        # ── 策略2: 环境变量 ──
+        env_root = os.environ.get("ANYADANCE_ROOT", "").strip()
+        if env_root:
+            env_path = Path(env_root)
+            manifest = env_path / "driver.vrdrivermanifest"
+            self.plugin.logger.debug(f"[driver] 检查 ANYADANCE_ROOT: {env_root}")
+            if manifest.exists():
+                resolved = str(env_path.resolve())
+                self.plugin.logger.info(f"[driver] ✓ ANYADANCE_ROOT 有效: {resolved}")
+                return resolved
+
+        # ── 策略3: 从 plugin_dir 向上逐级搜索 anyadance/ ──
+        search_start = plugin_dir
+        for depth in range(10):
+            candidate = search_start / "anyadance"
+            manifest = candidate / "driver.vrdrivermanifest"
+            self.plugin.logger.debug(f"[driver] 向上搜索 depth={depth}: {candidate}")
+            
+            if candidate.is_dir() and manifest.exists():
+                resolved = str(candidate.resolve())
+                self.plugin.logger.info(f"[driver] ✓ 在 {depth} 层父目录找到: {resolved}")
+                return resolved
+            
+            # 继续向上
+            parent = search_start.parent
+            if parent == search_start or not parent.exists():
+                self.plugin.logger.debug(f"[driver] 到达根目录，停止向上搜索")
+                break
+            search_start = parent
+
+        # ── 策略4: 当前工作目录 ──
+        cwd_candidate = Path.cwd() / "anyadance"
+        if (cwd_candidate / "driver.vrdrivermanifest").exists():
+            resolved = str(cwd_candidate.resolve())
+            self.plugin.logger.info(f"[driver] ✓ CWD 下找到: {resolved}")
+            return resolved
+
+        # ── 全部失败 ──
+        # 列出实际存在的候选目录供调试
+        debug_dirs = []
+        for d in [plugin_dir, Path.cwd(), Path(os.environ.get("ANYADANCE_ROOT", ""))]:
+            ad = d / "anyadance" if d else None
+            if ad and ad.exists():
+                has_manifest = (ad / "driver.vrdrivermanifest").exists()
+                debug_dirs.append(f"  - {ad} (is_dir=True, manifest={has_manifest})")
+            elif d and d.exists():
+                children = [str(c.name) for c in d.iterdir() if c.is_dir()]
+                debug_dirs.append(f"  - {d}/anyadance 不存在, 子目录: {children[:15]}")
+
+        self.plugin.logger.warning(
+            f"[driver] ✗ 未找到 anyadance 驱动目录!\n"
+            f"  已检查位置:\n"
+            + ("\n".join(debug_dirs) if debug_dirs else "    无可检查目录\n")
+            + f"\n  解决方案:\n"
+            f"  1) 确保 anyadance 文件夹在插件目录下或上级目录\n"
+            f"  2) 设置环境变量 ANYADANCE_ROOT=驱动目录绝对路径\n"
+            f"  3) 在设置中手动配置 anyadance_path"
+        )
         return ""
 
     def _do_scan_vrpathreg(self) -> str:
-        """实际扫描一次 vrpathreg.exe（不缓存）。"""
-        steam_dirs = [
-            Path(os.environ.get("STEAMVR_ROOT", "")),
-            Path("C:/Program Files (x86)/Steam/steamapps/common/SteamVR"),
-            Path("C:/Program Files/Steam/steamapps/common/SteamVR"),
-            Path("D:/Steam/steamapps/common/SteamVR"),
-            Path("D:/SteamLibrary/steamapps/common/SteamVR"),
-            Path("E:/Steam/steamapps/common/SteamVR"),
-            Path("E:/SteamLibrary/steamapps/common/SteamVR"),
-        ]
-        for d in steam_dirs:
-            p = d / "bin" / "win64" / "vrpathreg.exe"
+        """扫描 vrpathreg.exe（动态搜索，优先环境变量和注册表）。
+
+        搜索策略：
+        1. 环境变量 STEAMVR_ROOT
+        2. Windows 注册表 Steam 安装路径 → steamapps/common/SteamVR/bin/win64/vrpathreg.exe
+        3. 系统 PATH (where 命令)
+        """
+        self.plugin.logger.info(f"[driver] 开始扫描 vrpathreg...")
+
+        # ── 策略1: 环境变量 ──
+        env_root = os.environ.get("STEAMVR_ROOT", "").strip()
+        if env_root:
+            p = Path(env_root) / "bin" / "win64" / "vrpathreg.exe"
             if p.exists():
+                self.plugin.logger.info(f"[driver] ✓ STEAMVR_ROOT: {p}")
                 return str(p)
-        steam_root = self._find_steam_root()
-        if steam_root:
-            p = Path(steam_root) / "steamapps" / "common" / "SteamVR" / "bin" / "win64" / "vrpathreg.exe"
-            if p.exists():
-                return str(p)
+
+        # ── 策略2: Windows 注册表 ──
         try:
-            result = subprocess.run(["where", "vrpathreg"], capture_output=True, text=True, timeout=5)
+            import winreg
+            
+            # 尝试多个注册表路径（兼容不同安装方式）
+            reg_paths = [
+                (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
+                (winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam"),
+            ]
+            
+            for hkey, subkey in reg_paths:
+                try:
+                    key = winreg.OpenKey(hkey, subkey)
+                    val, _ = winreg.QueryValueEx(key, "SteamPath")
+                    winreg.CloseKey(key)
+                    
+                    if val:
+                        steam_path = Path(val).resolve()
+                        p = steam_path / "steamapps" / "common" / "SteamVR" / "bin" / "win64" / "vrpathreg.exe"
+                        if p.exists():
+                            resolved = str(p)
+                            self.plugin.logger.info(f"[driver] ✓ 从注册表找到 Steam 安装: {resolved}")
+                            return resolved
+                        else:
+                            self.plugin.logger.debug(f"[driver] Steam 路径存在但无 vrpathreg: {p}")
+                except (FileNotFoundError, OSError):
+                    continue
+                    
+        except ImportError:
+            self.plugin.logger.debug("[driver] winreg 模块不可用 (非Windows?)")
+        except Exception as e:
+            self.plugin.logger.debug(f"[driver] 注册表查询失败: {e}")
+
+        # ── 策略3: 系统 PATH ──
+        try:
+            result = subprocess.run(
+                ["where", "vrpathreg"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                env={**os.environ, "PATH": os.environ.get("PATH", "")}
+            )
             if result.returncode == 0 and result.stdout.strip():
-                return result.stdout.strip().splitlines()[0].strip()
-        except Exception:
-            pass
+                path = result.stdout.strip().splitlines()[0].strip()
+                if Path(path).exists():
+                    self.plugin.logger.info(f"[driver] ✓ 从 PATH 找到: {path}")
+                    return path
+        except Exception as e:
+            self.plugin.logger.debug(f"[driver] where 命令失败: {e}")
+
+        # ── 全部失败 ──
+        self.plugin.logger.warning(
+            f"[driver] ✗ 未找到 vrpathreg.exe\n"
+            f"  解决方案:\n"
+            f"  1) 设置 STEAMVR_ROOT=C:\\你的\\SteamVR\\目录\n"
+            f"  2) 确保 SteamVR 已正确安装\n"
+            f"  3) 将 vrpathreg.exe 所在目录添加到系统 PATH"
+        )
         return ""
 
     # ────────── 获取驱动目录（只读缓存/配置，不扫描） ──────────
@@ -178,20 +273,50 @@ class VrDriverService:
     # ────────── steamvr.vrsettings 管理（参考 register_driver.ps1） ──────────
 
     def _get_steamvr_settings_path(self) -> Path:
-        """获取 steamvr.vrsettings 文件路径。"""
-        openvr_paths = Path(os.environ.get("LOCALAPPDATA", "")) / "openvr" / "openvrpaths.vrpath"
-        if not openvr_paths.exists():
-            openvr_paths = Path.home() / "AppData" / "Local" / "openvr" / "openvrpaths.vrpath"
-        if openvr_paths.exists():
+        """获取 steamvr.vrsettings 文件路径（优先从 openvrpaths.vrpath 或注册表动态获取）。"""
+        # ── 策略1: 从 openvrpaths.vrpath 获取 config 目录 ──
+        for candidate in [
+            Path(os.environ.get("LOCALAPPDATA", "")) / "openvr" / "openvrpaths.vrpath",
+            Path.home() / "AppData" / "Local" / "openvr" / "openvrpaths.vrpath",
+        ]:
+            if not candidate.exists():
+                continue
             try:
-                with open(openvr_paths, "r", encoding="utf-8") as f:
+                with open(candidate, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 config_dirs = data.get("config")
                 if config_dirs and len(config_dirs) > 0:
                     return Path(config_dirs[0]) / "steamvr.vrsettings"
             except Exception:
-                pass
-        return Path("C:/Program Files (x86)/Steam/config/steamvr.vrsettings")
+                continue
+
+        # ── 策略2: 从 Windows 注册表 SteamPath 推导 ──
+        try:
+            import winreg
+            reg_paths = [
+                (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
+                (winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam"),
+            ]
+            for hkey, subkey in reg_paths:
+                try:
+                    key = winreg.OpenKey(hkey, subkey)
+                    val, _ = winreg.QueryValueEx(key, "SteamPath")
+                    winreg.CloseKey(key)
+                    if val:
+                        return Path(val) / "config" / "steamvr.vrsettings"
+                except (FileNotFoundError, OSError):
+                    continue
+        except ImportError:
+            pass
+        except Exception:
+            pass
+
+        # ── 策略3: 兜底（仅用于极端情况，此时大概率无法正常工作） ──
+        self.plugin.logger.warning(
+            "[driver] 无法从 openvrpaths 或注册表确定 steamvr.vrsettings 路径"
+        )
+        return Path.home() / "AppData" / "Local" / "openvr" / "steamvr.vrsettings"
 
     def _get_backup_dir(self) -> Path:
         """AnyaDance 备份目录（与 register_driver.ps1 一致）。"""
@@ -206,16 +331,6 @@ class VrDriverService:
         return self._get_backup_dir() / "registered_driver_path.txt"
 
     async def _apply_virtual_mode_settings(self, driver_dir: str) -> bool:
-        """写入 steamvr.vrsettings 中的全虚拟模式设置（参考 register_driver.ps1）。
-
-        关键设置：
-        - steamvr.forcedDriver = "anyadance"  → 强制使用 AnyaDance 作为主驱动
-        - steamvr.activateMultipleDrivers = true
-        - steamvr.requireHmd = true
-        - driver_anyadance.enable / enable_hmd / enable_controllers / enable_trackers = true
-        - power.turnOffScreensTimeout = 86400 → 防休眠
-        - power.pauseCompositorOnStandby = false
-        """
         settings_path = self._get_steamvr_settings_path()
         backup_path = self._get_backup_path()
         record_path = self._get_registered_path_record()
@@ -448,21 +563,37 @@ class VrDriverService:
 
 
     async def restart_steamvr(self) -> dict[str, Any]:
-        """强制停止并重新启动 SteamVR（注册驱动后需要重启才能生效）。"""
+        """强制停止并重新启动 SteamVR（注册驱动后需要重启才能生效）。
+        
+        注意：必须使用异步方式避免阻塞事件循环，否则会导致 UDP 流送中断 → SteamVR 崩溃。
+        """
+        # 异步终止 SteamVR 进程（不阻塞事件循环）
         for name in ["vrserver", "vrmonitor", "vrcompositor"]:
             try:
-                subprocess.run(
-                    ["taskkill", "/F", "/IM", f"{name}.exe"],
-                    capture_output=True, timeout=5,
+                proc = await asyncio.create_subprocess_exec(
+                    "taskkill", "/F", "/IM", f"{name}.exe",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
                 )
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=5.0)
+                except asyncio.TimeoutError:
+                    proc.kill()
+                    await proc.wait()
             except Exception:
                 pass
-        await asyncio.sleep(1)
+        
+        # 给进程清理时间
+        await asyncio.sleep(0.5)
+        
+        # 启动 SteamVR
         try:
-            subprocess.Popen(
-                ["cmd", "/c", "start", "steam://run/250820"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            proc = await asyncio.create_subprocess_exec(
+                "cmd", "/c", "start", "steam://run/250820",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
+            # 不等待完成，让 SteamVR 后台启动
             return {"ok": True, "status": "restarting"}
         except Exception as e:
             return {"ok": False, "error": str(e)}

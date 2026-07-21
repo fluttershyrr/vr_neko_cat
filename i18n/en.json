@@ -117,6 +117,16 @@
   "entries.vrc_handshake.description": "VRChat handshake animation (extend arm+open palm)",
   "entries.vrc_fbt_calibrate.name": "VRChat FBT Calibrate",
   "entries.vrc_fbt_calibrate.description": "VRChat full body tracking calibration (short/medium/tall/tower)",
+  "entries.vrc_left_menu.name": "VRChat Left Menu",
+  "entries.vrc_left_menu.description": "Open VRChat left quick menu",
+  "entries.vrc_right_menu.name": "VRChat Right Menu",
+  "entries.vrc_right_menu.description": "Open VRChat right quick menu",
+  "entries.vrc_select.name": "VRChat Menu Select",
+  "entries.vrc_select.description": "VRChat menu select/confirm (Z/A/X short press)",
+  "entries.vrc_drag_start.name": "VRChat Start Drag",
+  "entries.vrc_drag_start.description": "Hold grip+trigger to start grabbing and dragging an object",
+  "entries.vrc_drag_end.name": "VRChat End Drag",
+  "entries.vrc_drag_end.description": "Release grip+trigger to end dragging",
   "entries.vrc_gestures_info.name": "VRChat Gesture List",
   "entries.vrc_gestures_info.description": "Get all available VRChat standard gestures"
 }

@@ -149,6 +149,18 @@ class VrEmotionService:
 
         self._current_emotion = emotion
         self._emotion_intensity = i
+
+        # 立即发送 UDP 使情感姿态生效（同步发送，避免要求调用方改为 async）
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.ensure_future(self.plugin.udp_service.send())
+            else:
+                loop.run_until_complete(self.plugin.udp_service.send())
+        except RuntimeError:
+            pass
+
         return result
 
 
@@ -184,6 +196,18 @@ class VrEmotionService:
         self.plugin.input_service._do_gesture("left", gesture)
         self.plugin.input_service._do_gesture("right", gesture)
         result["gesture"] = gesture
+
+        # 立即发送 UDP 使混合情感姿态生效
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.ensure_future(self.plugin.udp_service.send())
+            else:
+                loop.run_until_complete(self.plugin.udp_service.send())
+        except RuntimeError:
+            pass
+
         return result
 
     def get_emotion_state(self) -> dict[str, Any]:

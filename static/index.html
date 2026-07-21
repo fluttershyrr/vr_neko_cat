@@ -6,372 +6,981 @@
   <title>VR N.E.K.O.cat - VRChat</title>
   <style>
     :root {
-      --bg-deep: #eef1f5;
-      --bg-page: #eef1f5;
-      --bg-card: #ffffff;
-      --bg-card-flat: #ffffff;
-      --bg-input: #f7f8fa;
-      --bg-input-focus: #ffffff;
-      --border: #e2e5eb;
-      --border-light: rgba(99,102,241,0.3);
-      --border-focus: #6366f1;
-      --text: #1a1d2e;
-      --text-secondary: #5f6778;
-      --text-muted: #9098aa;
-      --accent: #6366f1;
-      --accent-light: #4f46e5;
-      --accent-glow: rgba(99,102,241,0.16);
-      --accent-soft: rgba(99,102,241,0.06);
-      --success: #10b981;
-      --success-light: rgba(16,185,129,0.1);
-      --warning: #f59e0b;
-      --warning-light: rgba(245,158,11,0.1);
-      --danger: #ef4444;
-      --danger-light: rgba(239,68,68,0.08);
-      --card-radius: 16px;
-      --card-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
-      --card-hover-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(99,102,241,0.06);
-      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      /* 精致暖白金棕配色 */
+      --bg-base: #faf8f5;
+      --bg-warm: #f6f0e8;
+      --bg-deep: #efe9e0;
+      --text-primary: #2d2824;
+      --text-secondary: #5c5248;
+      --text-muted: #90887c;
+      --accent: #b8a078;
+      --accent-light: #d4c4a8;
+      --accent-dark: #967e58;
+      --accent-glow: rgba(184,160,120,0.18);
+      --success: #6db86d;
+      --success-bg: rgba(109,184,109,0.12);
+      --warning: #dba84a;
+      --warning-bg: rgba(218,168,74,0.10);
+      --danger: #cc7070;
+      --danger-bg: rgba(204,112,112,0.10);
+      
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+      
+      --glass-bg: rgba(255,255,255,0.45);
+      --glass-strong: rgba(255,255,255,0.62);
+      --glass-border: rgba(255,255,255,0.65);
+      --transition: 0.30s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── 全局 ── */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Inter', sans-serif;
-      background: var(--bg-page);
-      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(165deg, #fdfbf7 0%, #f8f3ec 40%, #f2ebe2 75%, #ebe5dc 100%);
+      color: var(--text-primary);
       min-height: 100vh;
-      padding: 28px;
-      line-height: 1.55;
+      padding: 32px;
+      line-height: 1.56;
       -webkit-font-smoothing: antialiased;
     }
-    /* 背景纹理：柔白底 + 极淡渐变光晕 */
+
     body::before {
-      content: ''; position: fixed; inset: 0; z-index: -1;
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
       background:
-        radial-gradient(ellipse 100% 50% at 20% 10%, rgba(99,102,241,0.04) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(139,92,246,0.03) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(16,185,129,0.03) 0%, transparent 50%);
+        radial-gradient(ellipse 80% 50% at 15% 10%, rgba(232,218,195,0.50) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 45% at 85% 90%, rgba(225,212,192,0.42) 0%, transparent 50%),
+        radial-gradient(circle at 68% 22%, rgba(240,230,215,0.35) 0%, transparent 40%);
       pointer-events: none;
     }
-    .container { max-width: 1240px; margin: 0 auto; position: relative; z-index: 0; }
 
-    /* ── 页头 ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(190,180,165,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(190,180,165,0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══════════════════ 液态玻璃基础 ═══════════════════ */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(26px) saturate(178%) brightness(1.02);
+      -webkit-backdrop-filter: blur(26px) saturate(178%) brightness(1.02);
+      border: 1px solid var(--glass-border);
+      border-top-color: rgba(255,255,255,0.82);
+      border-left-color: rgba(255,255,255,0.72);
+      border-right-color: rgba(220,210,198,0.22);
+      border-bottom-color: rgba(212,202,188,0.26);
+      box-shadow:
+        0 10px 38px rgba(60,50,36,0.06),
+        0 3px 11px rgba(60,50,36,0.035),
+        inset 0 1.5px 0 rgba(255,255,255,0.72),
+        inset 0 -1px 0 rgba(200,192,182,0.13),
+        0.8px 0 0 rgba(255,255,255,0.48), -0.8px 0 0 rgba(218,208,196,0.14);
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .glass::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 48%;
+      border-radius: inherit;
+      background: linear-gradient(
+        175deg,
+        rgba(255,255,255,0.40) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .glass > * { position: relative; z-index: 1; }
+
+    .glass:hover {
+      background: rgba(255,255,255,0.56);
+      box-shadow:
+        0 16px 48px rgba(60,50,36,0.09),
+        0 5px 18px rgba(60,50,36,0.052),
+        inset 0 1.5px 0 rgba(255,255,255,0.85),
+        inset 0 -1px 0 rgba(200,192,182,0.17);
+    }
+
+    .glass-strong {
+      background: var(--glass-strong);
+      backdrop-filter: blur(32px) saturate(192%) brightness(1.03);
+      -webkit-backdrop-filter: blur(32px) saturate(192%) brightness(1.03);
+    }
+
+    /* ═══════════════════ 头部区域 ═══════════════════ */
     .header {
-      display: flex; align-items: center; gap: 18px; margin-bottom: 28px;
-      background: var(--bg-card); padding: 20px 26px;
-      border-radius: var(--card-radius); border: 1px solid var(--border);
-      box-shadow: var(--card-shadow); backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 28px;
+      padding: 24px 32px;
+      border-radius: var(--radius-lg);
     }
+    
     .logo {
-      width: 46px; height: 46px;
-      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
-      border-radius: 13px; display: flex; align-items: center; justify-content: center;
-      font-size: 20px; font-weight: 700; color: #fff; flex-shrink: 0;
-      box-shadow: 0 4px 16px rgba(99,102,241,0.25);
-    }
-    .header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
-    .sub { font-size: 0.78rem; color: var(--text-secondary); margin-top: 3px; margin-right: auto; }
-
-    /* ── 标签页 ── */
-    .tabs { display: flex; gap: 4px; background: var(--bg-input); border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
-    .tab-btn {
-      padding: 7px 16px; border: none; background: none; color: var(--text-muted);
-      font-size: 0.8rem; font-weight: 500; cursor: pointer; border-radius: 7px;
-      transition: all var(--transition); position: relative; white-space: nowrap;
-    }
-    .tab-btn:hover { color: var(--text); background: rgba(0,0,0,0.04); }
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(145deg, #dcc8a8, #c0a878, #a89472);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 750;
       color: #fff;
-      box-shadow: 0 2px 8px rgba(99,102,241,0.3), 0 1px 2px rgba(99,102,241,0.2);
+      flex-shrink: 0;
+      box-shadow:
+        0 6px 22px rgba(184,160,120,0.30),
+        0 2px 7px rgba(184,160,120,0.16),
+        inset 0 1.8px 0 rgba(255,255,255,0.28),
+        inset 0 -1px 0 rgba(140,118,88,0.10);
+      letter-spacing: -0.03em;
+    }
+    
+    .header-info { flex: 1; min-width: 0; }
+    
+    .header h1 {
+      font-size: 1.28rem;
+      font-weight: 780;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    
+    .sub {
+      font-size: 0.80rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+      line-height: 1.4;
+      font-weight: 450;
+    }
+    
+    .header-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
     }
 
-    .tab-content { display: none; animation: fadeSlide 0.3s ease; }
-    .tab-content.active { display: block; }
-    @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    /* ═══════════════════ 标签导航 ═══════════════════ */
+    .nav-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 28px;
+      padding: 6px;
+      background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.48) 0%,
+        rgba(250,245,238,0.40) 50%,
+        rgba(245,240,232,0.34) 100%
+      );
+      backdrop-filter: blur(20px) saturate(165%) brightness(1.02);
+      border-radius: var(--radius-md);
+      border: 1.2px solid rgba(255,255,255,0.65);
+      border-top-color: rgba(255,255,255,0.82);
+      border-left-color: rgba(255,255,255,0.74);
+      box-shadow:
+        0 4px 18px rgba(60,50,36,0.042),
+        inset 0 1.2px 0 rgba(255,255,255,0.62),
+        inset 0 -1px 0 rgba(198,188,176,0.08);
+    }
+    
+    .tab-btn {
+      padding: 10px 22px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      font-weight: 570;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition);
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+    
+    .tab-btn:hover {
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.55);
+      transform: translateY(-1px);
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(148deg, #d8caa8, #b8a070);
+      color: #fff;
+      box-shadow:
+        0 5px 18px rgba(184,160,120,0.36),
+        0 2px 6px rgba(184,160,120,0.20),
+        inset 0 1.5px 0 rgba(255,255,255,0.25),
+        inset 0 -1px 0 rgba(144,124,92,0.14);
+      transform: translateY(-1px);
+    }
 
-    /* ── 卡片 ── */
+    /* ═══════════════════ 内容区 ═══════════════════ */
+    .panel { display: none; animation: panelIn 0.32s ease-out; }
+    .panel.active { display: block; }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .card {
-      background: var(--bg-card); border-radius: var(--card-radius);
-      padding: 22px 26px; margin-bottom: 16px;
-      border: 1px solid var(--border); box-shadow: var(--card-shadow);
-      transition: box-shadow var(--transition), border-color var(--transition);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
     }
-    .card:hover { box-shadow: var(--card-hover-shadow); }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 44%;
+      border-radius: var(--radius-lg) var(--radius-lg) 130% 130%;
+      background: linear-gradient(
+        178deg,
+        rgba(255,255,255,0.38) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .card > * { position: relative; z-index: 1; }
+    
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 28px 68px rgba(60,50,36,0.12),
+        0 8px 30px rgba(60,50,36,0.065),
+        inset 0 2px 0 rgba(255,255,255,0.90),
+        inset 0 -1.2px 0 rgba(200,190,178,0.22) !important;
+    }
+
+    /* 卡片标题 */
     .card-title {
-      font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.11em; margin-bottom: 18px;
-      display: flex; align-items: center; gap: 10px;
+      font-size: 0.73rem;
+      font-weight: 660;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    /* 装饰色条 */
+    
     .card-title::before {
-      content: ''; width: 3px; height: 16px; border-radius: 2px;
-      background: linear-gradient(180deg, var(--accent), #8b5cf6);
+      content: '';
+      width: 4px;
+      height: 17px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, var(--accent-light), var(--accent));
     }
 
-    /* ── 网格 ── */
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-    .grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+    /* ═══════════════════ 布局网格 ═══════════════════ */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 
-    /* ── 表单 ── */
-    .form-group { margin-bottom: 14px; }
-    .form-group label {
-      display: block; font-size: 0.78rem; color: var(--text-secondary);
-      margin-bottom: 6px; font-weight: 500; letter-spacing: 0.01em;
+    /* ═══════════════════ 表单元素 ═══════════════════ */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 0.79rem;
+      color: var(--text-secondary);
+      margin-bottom: 7px;
+      font-weight: 560;
+      letter-spacing: 0.005em;
     }
-    input[type="text"], input[type="number"], select {
-      width: 100%; padding: 10px 14px; background: var(--bg-input);
-      border: 1px solid var(--border); border-radius: 9px; color: var(--text);
-      font-size: 0.88rem; transition: all var(--transition); outline: none;
+    
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(252,250,246,0.72);
+      backdrop-filter: blur(12px);
+      border: 1.3px solid rgba(200,190,176,0.38);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      transition: all var(--transition);
+      outline: none;
     }
-    input[type="text"]:hover, input[type="number"]:hover, select:hover { border-color: #c2c7d2; background: #fdfdfe; }
-    input[type="text"]:focus, input[type="number"]:focus, select:focus {
-      border-color: var(--border-focus); background: var(--bg-input-focus);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+    
+    input[type="text"]:hover,
+    input[type="number"]:hover,
+    select:hover {
+      border-color: rgba(180,170,155,0.52);
+      background: rgba(255,255,255,0.84);
+    }
+    
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 0 0 3.5px var(--accent-glow);
     }
 
-    /* ── Range 滑块 ── */
+    /* Range滑块 */
     input[type="range"] {
-      -webkit-appearance: none; width: 100%; height: 6px;
-      background: #e2e5eb; border-radius: 3px; outline: none; cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(90deg, rgba(200,188,172,0.42), rgba(178,166,150,0.36));
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
     }
+    
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 20px; height: 20px;
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      border-radius: 50%; cursor: pointer;
-      border: 2px solid #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3), 0 0 0 1px rgba(99,102,241,0.12);
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(148deg, #d4c4a0, #a89870);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2.5px solid rgba(255,255,255,0.90);
+      box-shadow:
+        0 2px 10px rgba(184,160,120,0.28),
+        0 0 0 1px rgba(184,160,120,0.10);
       transition: transform var(--transition), box-shadow var(--transition);
     }
-    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); box-shadow: 0 3px 12px rgba(99,102,241,0.4); }
-    .range-row { display: flex; align-items: center; gap: 10px; }
+    
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.14);
+      box-shadow: 0 4px 18px rgba(184,160,120,0.40);
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
     .range-row input[type="range"] { flex: 1; }
     .range-val {
-      min-width: 42px; text-align: right; font-size: 0.85rem;
-      color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600;
+      min-width: 48px;
+      text-align: right;
+      font-size: 0.86rem;
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
     }
 
-    /* ── 按钮 ── */
+    /* ═══════════════════ 按钮 ═══════════════════ */
     .btn {
-      padding: 9px 20px; border: none; border-radius: 9px;
-      font-size: 0.84rem; font-weight: 600; cursor: pointer;
-      transition: all var(--transition); display: inline-flex;
-      align-items: center; gap: 6px; letter-spacing: 0.01em;
-      position: relative; overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 22px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.005em;
+      position: relative;
+      overflow: hidden;
     }
     .btn:active { transform: scale(0.97); }
+    
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff;
-      box-shadow: 0 2px 6px rgba(99,102,241,0.28), 0 0 0 1px rgba(99,102,241,0.1);
+      background: linear-gradient(148deg, #d4c4a0, #a89870);
+      color: #fff;
+      box-shadow:
+        0 4px 14px rgba(184,160,120,0.32),
+        0 1px 4px rgba(184,160,120,0.15),
+        inset 0 1.2px 0 rgba(255,255,255,0.22);
     }
-    .btn-primary:hover { background: linear-gradient(135deg, #4f46e5, #8b5cf6); box-shadow: 0 4px 14px rgba(99,102,241,0.4); }
+    .btn-primary:hover {
+      background: linear-gradient(148deg, #e0d0ac, #bcac84);
+      box-shadow: 0 6px 22px rgba(184,160,120,0.42);
+    }
+    
     .btn-success {
-      background: linear-gradient(135deg, #10b981, #059669); color: #fff;
-      box-shadow: 0 2px 6px rgba(16,185,129,0.28);
+      background: linear-gradient(148deg, #88c480, #6db86d);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(109,184,109,0.26), inset 0 1px 0 rgba(255,255,255,0.18);
     }
-    .btn-success:hover { box-shadow: 0 4px 14px rgba(16,185,129,0.4); }
+    .btn-success:hover { box-shadow: 0 5px 19px rgba(109,184,109,0.38); }
+    
     .btn-danger {
-      background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
-      box-shadow: 0 2px 6px rgba(239,68,68,0.22);
+      background: linear-gradient(148deg, #d88888, #cc7070);
+      color: #fff;
+      box-shadow: 0 3px 11px rgba(204,112,112,0.22), inset 0 1px 0 rgba(255,255,255,0.16);
     }
-    .btn-danger:hover { box-shadow: 0 4px 14px rgba(239,68,68,0.35); }
+    .btn-danger:hover { box-shadow: 0 5px 18px rgba(204,112,112,0.36); }
+    
     .btn-warning {
-      background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
-      box-shadow: 0 2px 6px rgba(245,158,11,0.25);
+      background: linear-gradient(148deg, #ddb868, #cba040);
+      color: #fff;
+      box-shadow: 0 3px 11px rgba(203,160,74,0.26), inset 0 1px 0 rgba(255,255,255,0.20);
     }
-    .btn-warning:hover { box-shadow: 0 4px 14px rgba(245,158,11,0.35); }
+    .btn-warning:hover { box-shadow: 0 5px 18px rgba(203,160,74,0.36); }
+    
     .btn-outline {
-      background: #fff; border: 1px solid var(--border); color: var(--text-secondary);
+      background: rgba(255,255,255,0.55);
+      border: 1.2px solid rgba(200,190,176,0.40);
+      color: var(--text-secondary);
+      backdrop-filter: blur(10px);
     }
     .btn-outline:hover {
-      border-color: var(--accent); color: var(--accent);
-      background: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-dark);
+      background: var(--accent-glow);
+      box-shadow: 0 0 0 3.5px var(--accent-glow);
     }
-    .btn-sm { padding: 6px 13px; font-size: 0.76rem; border-radius: 7px; }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 0.77rem;
+      border-radius: 8px;
+    }
 
-    /* ── 状态圆点 ── */
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    /* ═══════════════════ Toggle开关 ═══════════════════ */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .toggle input { display: none; }
+    
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(200,190,176,0.48);
+      border-radius: 14px;
+      transition: all var(--transition);
+    }
+    
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: all var(--transition);
+      box-shadow: 0 2px 8px rgba(60,50,36,0.12), 0 0 0 1px rgba(200,190,176,0.28);
+    }
+    
+    .toggle input:checked + .toggle-slider {
+      background: linear-gradient(148deg, #d4c4a0, #a89870);
+      box-shadow: 0 0 14px rgba(184,160,120,0.22);
+    }
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+      background: #fff;
+    }
+    
+    .toggle-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ═══════════════════ 状态指示 ═══════════════════ */
     .status-dot {
-      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-      margin-right: 8px; position: relative; transition: all var(--transition);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      transition: all var(--transition);
     }
-    .status-dot.on { background: var(--success); box-shadow: 0 0 0 3px var(--success-light), 0 0 10px rgba(16,185,129,0.3); }
-    .status-dot.off { background: #c2c7d2; }
+    .status-dot.on {
+      background: var(--success);
+      box-shadow: 0 0 0 3px var(--success-bg), 0 0 14px rgba(109,184,109,0.35);
+    }
+    .status-dot.off { background: rgba(180,170,158,0.48); }
 
-    /* 设备位姿卡片 */
-    .device-section {
-      background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 12px; padding: 15px 17px; margin-bottom: 10px;
-      user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
-      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
-      position: relative; cursor: grab; touch-action: none;
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 15px;
+      border-radius: 24px;
+      font-size: 0.75rem;
+      font-weight: 620;
+      background: rgba(255,255,255,0.45);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(200,190,176,0.38);
+      color: var(--text-secondary);
     }
-    .device-section:hover { border-color: #c2c7d2; }
-    .device-section h4 {
-      font-size: 0.84rem; font-weight: 600; color: var(--text);
-      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+    .pill.success { background: var(--success-bg); color: #4a9a4a; border-color: rgba(109,184,109,0.26); }
+    .pill.error { background: var(--danger-bg); color: #a05050; border-color: rgba(204,112,112,0.26); }
+    .pill.info { background: var(--accent-glow); color: #806850; border-color: rgba(184,160,120,0.20); }
+
+    /* ═══════════════════ 信息框 ═══════════════════ */
+    .info-box {
+      background: rgba(255,255,255,0.36);
+      backdrop-filter: blur(16px) saturate(155%);
+      border: 1px solid rgba(255,255,255,0.52);
+      border-top-color: rgba(255,255,255,0.65);
+      border-left-color: rgba(255,255,255,0.55);
+      border-right-color: rgba(215,205,190,0.18);
+      border-bottom-color: rgba(208,198,183,0.24);
+      border-radius: var(--radius-md);
+      padding: 15px 20px;
+      font-size: 0.83rem;
+      color: var(--text-secondary);
+      line-height: 1.54;
+      box-shadow: 0 5px 18px rgba(60,50,36,0.04), inset 0 1.2px 0 rgba(255,255,255,0.54);
+    }
+    .info-box .hl { font-weight: 620; color: var(--accent-dark); }
+
+    /* ═══════════════════ 设备位姿卡片 - 核心！ ═══════════════════ */
+    .device-card {
+      background: linear-gradient(
+        162deg,
+        rgba(255,255,255,0.55) 0%,
+        rgba(252,248,242,0.45) 45%,
+        rgba(248,242,235,0.38) 100%
+      );
+      backdrop-filter: blur(22px) saturate(172%) brightness(1.018);
+      border: 1.3px solid rgba(255,255,255,0.68);
+      border-top-color: rgba(255,255,255,0.88);
+      border-left-color: rgba(255,255,255,0.76);
+      border-right-color: rgba(220,210,196,0.28);
+      border-bottom-color: rgba(212,202,188,0.34);
+      border-radius: 18px;
+      padding: 20px 24px;
+      margin-bottom: 14px;
       user-select: none;
+      -webkit-user-select: none;
+      transition: all var(--transition);
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+      box-shadow:
+        0 8px 30px rgba(60,50,36,0.058),
+        0 2px 9px rgba(60,50,36,0.034),
+        inset 0 1.8px 0 rgba(255,255,255,0.72),
+        inset 0 -1.2px 0 rgba(198,188,178,0.12),
+        1px 0 0 rgba(255,255,255,0.48),
+        -1px 0 0 rgba(218,208,196,0.15);
     }
-    .device-section h4::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%; display: inline-block;
-      background: linear-gradient(135deg, var(--accent), #8b5cf6); margin-right: 10px; flex-shrink: 0;
+    
+    .device-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 44%;
+      border-radius: 18px 18px 105% 105%;
+      background: linear-gradient(
+        178deg,
+        rgba(255,255,255,0.42) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 0;
     }
-    .device-section h4 .hint { font-size: 0.68rem; color: var(--text-muted); font-weight: 400; }
-    .pos-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .device-section input[type="number"] {
-      cursor: ew-resize; user-select: none; -webkit-user-select: none;
-      -moz-user-select: none; -ms-user-select: none; caret-color: transparent;
-      touch-action: none; text-align: center; font-variant-numeric: tabular-nums;
-      padding: 8px 8px; font-size: 0.84rem;
+    
+    .device-card > * { position: relative; z-index: 1; }
+    
+    .device-card:hover {
+      border-color: rgba(190,178,160,0.54);
+      background: linear-gradient(
+        162deg,
+        rgba(255,255,255,0.64) 0%,
+        rgba(252,248,242,0.54) 45%,
+        rgba(248,242,235,0.47) 100%
+      );
+      transform: translateY(-2px);
+      box-shadow:
+        0 15px 40px rgba(60,50,36,0.080),
+        0 4px 12px rgba(60,50,36,0.045),
+        inset 0 1.8px 0 rgba(255,255,255,0.82),
+        inset 0 -1.2px 0 rgba(198,188,178,0.12),
+        1px 0 0 rgba(255,255,255,0.55),
+        -1px 0 0 rgba(218,208,196,0.18);
     }
-    .device-section input[type="number"].dragging {
-      cursor: grabbing; background: var(--bg-input-focus);
-      border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow);
+    
+    .device-card h4 {
+      font-size: 0.90rem;
+      font-weight: 660;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.005em;
     }
-    .device-section.card-drag { cursor: none; border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--accent-glow), 0 4px 12px rgba(99,102,241,0.12); }
-    .device-section.card-drag.move::after { content: '↔ XY移动'; }
-    .device-section.card-drag.rotate::after { content: '↻ 旋转'; }
-    .device-section.card-drag.depth::after { content: '↗ Z深度'; }
-    .device-section.card-drag::after {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      color: #fff; padding: 6px 16px; border-radius: 22px; font-size: 0.78rem;
-      font-weight: 600; pointer-events: none;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.15), 0 0 20px rgba(99,102,241,0.25);
+    
+    .device-card h4::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background: linear-gradient(145deg, #e4d4ac, #bca878);
+      margin-right: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 7px rgba(184,160,120,0.32);
+    }
+    
+    .device-card h4 .hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .pose-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 13px;
+    }
+    
+    .device-card input[type="number"] {
+      cursor: ew-resize;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      caret-color: transparent;
+      touch-action: none;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      padding: 11px 8px;
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.58);
+      border: 1.3px solid rgba(216,206,192,0.36);
+      border-radius: 10px;
+      transition: all var(--transition);
+      box-shadow: inset 0 1.5px 3px rgba(60,50,36,0.04), 0 1px 2px rgba(60,50,36,0.02);
+    }
+    
+    .device-card input[type="number"]:hover {
+      border-color: rgba(190,178,160,0.55);
+      background: rgba(255,255,255,0.70);
+    }
+    
+    .device-card input[type="number"].dragging {
+      cursor: grabbing;
+      background: rgba(255,255,255,0.95);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3.5px var(--accent-glow), inset 0 1.5px 3px rgba(184,160,120,0.08);
+    }
+
+    .device-card.dragging {
+      cursor: none;
+      border-color: var(--accent);
+      background: linear-gradient(
+        162deg,
+        rgba(255,255,255,0.72) 0%,
+        rgba(252,248,242,0.62) 45%,
+        rgba(248,242,235,0.55) 100%
+      ) !important;
+      box-shadow:
+        0 0 0 2.8px var(--accent-glow),
+        0 16px 42px rgba(184,160,120,0.20),
+        inset 0 1.5px 0 rgba(255,255,255,0.78),
+        inset 0 -1.2px 0 rgba(198,188,178,0.12);
+      transform: scale(1.01);
+    }
+
+    .device-card.dragging.move::after { content: '↔ XY移动'; }
+    .device-card.dragging.rotate::after { content: '↻ 旋转'; }
+    .device-card.dragging.depth::after { content: '↗ Z深度'; }
+    
+    .device-card.dragging::after {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(148deg, #d4c4a0, #a89870);
+      color: #fff;
+      padding: 8px 19px;
+      border-radius: 26px;
+      font-size: 0.80rem;
+      font-weight: 620;
+      pointer-events: none;
+      box-shadow:
+        0 8px 26px rgba(60,50,36,0.17),
+        0 0 22px rgba(184,160,120,0.24),
+        inset 0 1.2px 0 rgba(255,255,255,0.22);
       z-index: 10;
     }
 
-    /* ── 手指 ── */
-    .finger-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
-    .finger-item label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px; text-align: center; }
-    .preset-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    /* ═══════════════════ 手指/手势 ═══════════════════ */
+    .finger-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; margin-top: 11px; }
+    .finger-item label { display: block; font-size: 0.70rem; color: var(--text-muted); margin-bottom: 5px; text-align: center; font-weight: 520; }
 
-    /* ── Toggle 开关 ── */
-    .toggle-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
-    .toggle { position: relative; width: 46px; height: 26px; cursor: pointer; }
-    .toggle input { display: none; }
-    .toggle-slider {
-      position: absolute; inset: 0;
-      background: #cbd0da; border-radius: 13px;
+    /* ═══════════════════ 预设按钮 ═══════════════════ */
+    .preset-btn {
+      padding: 11px 25px;
+      border: 1.3px solid rgba(200,190,176,0.44);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.42);
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      font-weight: 620;
+      cursor: pointer;
       transition: all var(--transition);
+      backdrop-filter: blur(11px);
     }
-    .toggle-slider::before {
-      content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px;
-      background: #fff; border-radius: 50%; transition: all var(--transition);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+      background: var(--accent-glow);
     }
-    .toggle input:checked + .toggle-slider {
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      box-shadow: 0 0 8px rgba(99,102,241,0.25);
+    .preset-btn.selected {
+      background: linear-gradient(148deg, #d4c4a0, #a89870);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(184,160,120,0.30), inset 0 1.2px 0 rgba(255,255,255,0.20);
+      animation: pulsePreset 1.6s ease-in-out infinite;
     }
-    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); background: #fff; }
-    .toggle-label { font-size: 0.84rem; color: var(--text-secondary); }
+    .preset-btn.selected::after {
+      content: ''; position: absolute; inset: -2.5px; border-radius: calc(var(--radius-sm) + 3px);
+      border: 2px solid var(--accent); opacity: 0.45;
+      animation: ripplePreset 1.6s ease-in-out infinite;
+    }
+    @keyframes pulsePreset {
+      0%, 100% { box-shadow: 0 3px 12px rgba(184,160,120,0.28); }
+      50% { box-shadow: 0 6px 20px rgba(184,160,120,0.44); }
+    }
+    @keyframes ripplePreset {
+      0% { transform: scale(1); opacity: 0.55; }
+      100% { transform: scale(1.12); opacity: 0; }
+    }
 
-    /* ── 信息框 ── */
-    .info-box {
-      background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 10px; padding: 13px 17px; font-size: 0.82rem;
-      color: var(--text-secondary); line-height: 1.5;
-    }
-    .info-box .highlight { color: var(--accent); font-weight: 600; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .preset-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
-    /* ── 情感标签 ── */
-    .emotion-chip {
-      display: inline-flex; padding: 6px 14px; border-radius: 8px;
-      font-size: 0.76rem; font-weight: 500;
-      background: #fff; border: 1px solid var(--border);
-      cursor: pointer; transition: all var(--transition);
+    /* ═══════════════════ 情感标签 ═══════════════════ */
+    .emo-chip {
+      display: inline-flex;
+      padding: 8px 17px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 530;
+      background: rgba(255,255,255,0.44);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.54);
+      cursor: pointer;
+      transition: all var(--transition);
       color: var(--text-secondary);
     }
-    .emotion-chip:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-    .emotion-chip.active {
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      color: #fff; border-color: transparent;
-      box-shadow: 0 2px 10px rgba(99,102,241,0.28);
+    .emo-chip:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      color: var(--accent-dark);
     }
-    .emotion-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+    .emo-chip.active {
+      background: linear-gradient(148deg, #d4c4a0, #a89870);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 3px 14px rgba(184,160,120,0.28), inset 0 1.2px 0 rgba(255,255,255,0.20);
+    }
+    .emo-grid { display: flex; flex-wrap: wrap; gap: 9px; }
 
-    /* ── Toast ── */
-    .toast-container { position: fixed; bottom: 28px; right: 28px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
-    .toast {
-      padding: 13px 20px; border-radius: 10px; color: #fff; font-size: 0.84rem; font-weight: 600;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-      animation: toastIn 0.35s cubic-bezier(0.4,0,0.2,1);
-      max-width: 340px; line-height: 1.4; pointer-events: auto; backdrop-filter: blur(12px);
+    /* 菜单按钮组 */
+    .menu-group {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 11px;
+      flex-wrap: wrap;
     }
-    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
-    .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-    .toast.info { background: linear-gradient(135deg, var(--accent), #7c3aed); }
-    .toast.warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+    .menu-tag {
+      display: inline-block;
+      min-width: 52px;
+      padding: 5px 12px;
+      background: rgba(184,160,120,0.10);
+      border-radius: 8px;
+      font-size: 0.76rem;
+      color: var(--accent-dark);
+      font-weight: 620;
+    }
+
+    /* 快捷键配置 */
+    .kb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .kb-item { display: flex; flex-direction: column; gap: 7px; }
+    .kb-item label { font-size: 0.76rem; color: var(--text-secondary); font-weight: 530; }
+    .kb-input {
+      padding: 9px 12px;
+      border: 1.5px dashed rgba(200,190,176,0.44);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.44);
+      backdrop-filter: blur(10px);
+      color: var(--text-primary);
+      font-size: 0.81rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      min-width: 85px;
+    }
+    .kb-input:hover, .kb-input.recording {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      box-shadow: 0 0 0 2.5px var(--accent-glow), inset 0 1px 2px rgba(255,255,255,0.32);
+    }
+
+    /* 截图预览 */
+    #capPreview {
+      border-radius: var(--radius-md);
+      border: 1.5px dashed rgba(188,178,162,0.44) !important;
+      background: rgba(252,250,246,0.58);
+      backdrop-filter: blur(14px);
+    }
+    #capPreview img { border-radius: 10px; }
+    #capPreview span { color: var(--text-muted) !important; }
+
+    /* Toast提示 */
+    .toast-stack {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 620;
+      box-shadow:
+        0 10px 32px rgba(60,50,36,0.16),
+        0 4px 13px rgba(60,50,36,0.09),
+        inset 0 1.2px 0 rgba(255,255,255,0.20);
+      animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 370px;
+      line-height: 1.43;
+      pointer-events: auto;
+      backdrop-filter: blur(18px) saturate(145%);
+    }
+    .toast.success { background: linear-gradient(148deg, #88c480, #6db86d); }
+    .toast.error { background: linear-gradient(148deg, #d88888, #cc7070); }
+    .toast.info { background: linear-gradient(148deg, #d4c4a0, #a89870); }
+    .toast.warning { background: linear-gradient(148deg, #ddb868, #cba040); }
     @keyframes toastIn { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .toast.hiding { opacity: 0; transform: translateY(18px); transition: all 0.3s ease; }
 
-    /* ── 加载状态 ── */
-    .btn-loading { position: relative; pointer-events: none; opacity: 0.8; color: transparent !important; }
-    .btn-loading::after {
-      content: ''; position: absolute; top: 50%; left: 50%;
-      width: 18px; height: 18px; margin: -9px 0 0 -9px;
-      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
+    /* 加载状态 */
+    .loading { position: relative; pointer-events: none; opacity: 0.8; color: transparent !important; }
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 18px; height: 18px;
+      margin: -9px 0 0 -9px;
+      border: 2px solid rgba(255,255,255,0.30);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── 状态药丸 ── */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 600;
-      background: var(--bg-input); border: 1px solid var(--border);
-      color: var(--text-secondary);
-    }
-    .status-pill.success { background: var(--success-light); color: #059669; border-color: rgba(16,185,129,0.25); }
-    .status-pill.error { background: var(--danger-light); color: #dc2626; border-color: rgba(239,68,68,0.25); }
-    .status-pill.info { background: var(--accent-soft); color: var(--accent); border-color: rgba(99,102,241,0.2); }
+    /* 高亮文字 */
+    .hl { font-weight: 620; color: var(--accent-dark); }
 
-    /* ── 截图预览优化 ── */
-    #capPreview { border-radius: 10px; border: 1px dashed #cbd0da !important; background: var(--bg-input); }
-    #capPreview img { border-radius: 8px; }
-    #capPreview span { color: var(--text-muted) !important; }
-
+    /* 响应式 */
     @media (max-width: 768px) {
-      .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
-      body { padding: 14px; }
-      .header { flex-wrap: wrap; }
-      .tabs { width: 100%; overflow-x: auto; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      body { padding: 16px; }
+      .header { flex-wrap: wrap; padding: 20px 22px; }
+      .nav-bar { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .card { padding: 20px 22px; }
+      .device-card { padding: 16px 18px; }
+    }
+    @media (min-width: 1200px) {
+      .container { max-width: 1380px; }
     }
   </style>
 </head>
 <body>
 <div class="container">
 
-  <div class="header">
+  <!-- 头部 -->
+  <div class="header glass glass-strong">
     <div class="logo">VR</div>
-    <div>
-      <h1>VR N.E.K.O.cat · VRChat</h1>
-      <div class="sub">N.E.K.O → AnyaDance → SteamVR → VRChat · <span id="portDisplay">39570</span> · <span id="stateSummary">就绪</span></div>
-      <div class="sub" style="margin-top:4px">最后操作: <span id="lastAction" class="status-pill info">等待操作</span></div>
-
+    <div class="header-info">
+      <h1>VR N.E.K.O.cat</h1>
+      <div class="sub">VRChat 控制面板 · 端口 <span id="portDisplay">39570</span> · <span id="stateSummary">就绪</span></div>
     </div>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('main')">总览</button>
-      <button class="tab-btn" onclick="switchTab('vrchat')">VRChat</button>
-      <button class="tab-btn" onclick="switchTab('emotion')">情感</button>
-      <button class="tab-btn" onclick="switchTab('tracking')">跟随</button>
-      <button class="tab-btn" onclick="switchTab('vision')">视觉</button>
-      <button class="tab-btn" onclick="switchTab('driver')">驱动</button>
+    <div class="header-actions">
+      <div id="lastAction" class="pill info">等待操作</div>
     </div>
   </div>
 
-  <!-- tab: main -->
-  <div class="tab-content active" id="tab-main">
-    <div class="card">
+  <!-- 导航栏 -->
+  <div class="nav-bar">
+    <button class="tab-btn active" onclick="switchTab('main')">总览</button>
+    <button class="tab-btn" onclick="switchTab('vrchat')">VRChat</button>
+    <button class="tab-btn" onclick="switchTab('emotion')">情感</button>
+    <button class="tab-btn" onclick="switchTab('tracking')">跟随</button>
+    <button class="tab-btn" onclick="switchTab('vision')">视觉</button>
+    <button class="tab-btn" onclick="switchTab('driver')">驱动</button>
+  </div>
+
+  <!-- ══ 总览面板 ══ -->
+  <div class="panel active" id="panel-main">
+    <!-- 连接与流送 -->
+    <div class="card glass">
       <div class="card-title">连接 & 流送</div>
-      <div class="flex-between" style="margin-bottom:14px">
+      <div class="flex-between" style="margin-bottom:16px">
         <div>
           <span class="status-dot" id="streamDot"></span>
-          <span id="streamStatus" style="font-weight:600">未流送</span>
-          <span style="color:var(--text-secondary);font-size:0.82rem;margin-left:8px" id="streamDetail"></span>
+          <span id="streamStatus" style="font-weight:620;font-size:0.90rem">未流送</span>
+          <span style="color:var(--text-secondary);font-size:0.82rem;margin-left:10px" id="streamDetail"></span>
         </div>
         <div class="btn-row">
           <button class="btn btn-success" id="btnStartStream" onclick="startStream()">开始流送</button>
@@ -379,57 +988,85 @@
           <button class="btn btn-outline btn-sm" onclick="sendPacket()">发送单次</button>
         </div>
       </div>
-      <div class="grid3">
-        <div class="form-group"><label>UDP 主机</label><input type="text" id="cfgHost" value="127.0.0.1" onchange="markDirty()"></div>
-        <div class="form-group"><label>UDP 端口</label><input type="number" id="cfgPort" value="39570" onchange="markDirty()"></div>
-        <div class="form-group"><label>流送速率 (Hz)</label><input type="number" id="cfgRate" value="20" onchange="markDirty()"></div>
+      <div class="grid-3">
+        <div class="field"><label>UDP 主机</label><input type="text" id="cfgHost" value="127.0.0.1" onchange="markDirty()"></div>
+        <div class="field"><label>UDP 端口</label><input type="number" id="cfgPort" value="39570" onchange="markDirty()"></div>
+        <div class="field"><label>流送速率 (Hz)</label><input type="number" id="cfgRate" value="20" onchange="markDirty()"></div>
       </div>
-      <div class="toggle-row" style="margin-top:10px">
+      <div class="toggle-row" style="margin-top:12px">
         <label class="toggle"><input type="checkbox" id="cfgSendHmd" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">发送 HMD</span>
-        <label class="toggle" style="margin-left:14px"><input type="checkbox" id="cfgSendControllers" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label" title="关闭可避免与真实手柄冲突">发送控制器</span>
-        <label class="toggle" style="margin-left:14px"><input type="checkbox" id="cfgSendTrackers" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">发送追踪器</span>
+        <label class="toggle" style="margin-left:16px"><input type="checkbox" id="cfgSendControllers" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label" title="关闭可避免与真实手柄冲突">发送控制器</span>
+        <label class="toggle" style="margin-left:16px"><input type="checkbox" id="cfgSendTrackers" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">发送追踪器</span>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">预设 & 镜像</div>
-      <div class="preset-btn-row">
-        <button class="btn btn-outline" onclick="applyPreset('standing')">站立</button>
-        <button class="btn btn-outline" onclick="applyPreset('t_pose')">T-Pose</button>
-        <button class="btn btn-outline" onclick="applyPreset('menu')">菜单</button>
+    <!-- 设备位姿 - 核心功能，突出显示 -->
+    <div class="card glass" style="border-color:rgba(184,160,120,0.28)">
+      <div class="card-title" style="color:var(--accent-dark)">🎮 设备位姿 · Device Pose</div>
+      <div class="info-box" style="margin-bottom:18px;background:rgba(184,160,120,0.08);border-color:rgba(184,160,120,0.18)">
+        支持拖拽调整位置/旋转。操作：<span class="hl">左键拖动=XY移动</span> · <span class="hl">右键拖动=Z深度</span> · <span class="hl">中键/Shift+左键=旋转</span> · <span class="hl">滚轮微调Z轴</span>
       </div>
-      <div class="toggle-row" style="margin-top:10px">
+      <div id="devicePoses"></div>
+    </div>
+
+    <!-- 预设 & 镜像 -->
+    <div class="card glass">
+      <div class="card-title">预设 & 镜像</div>
+      <div class="preset-row">
+        <button id="preset-standing" class="preset-btn" onclick="applyPreset('standing')">站立</button>
+        <button id="preset-t_pose" class="preset-btn" onclick="applyPreset('t_pose')">T-Pose</button>
+        <button id="preset-menu" class="preset-btn" onclick="applyPreset('menu')">菜单</button>
+      </div>
+      <div class="toggle-row" style="margin-top:12px">
         <label class="toggle"><input type="checkbox" id="cfgMirrorHands" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">镜像手部</span>
         <button class="btn btn-outline btn-sm" onclick="mirrorHands()" style="margin-left:auto">应用</button>
-        <label class="toggle" style="margin-left:14px"><input type="checkbox" id="cfgMirrorFeet" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">镜像脚部</span>
+        <label class="toggle" style="margin-left:16px"><input type="checkbox" id="cfgMirrorFeet" onchange="markDirty()"><span class="toggle-slider"></span></label><span class="toggle-label">镜像脚部</span>
         <button class="btn btn-outline btn-sm" onclick="mirrorFeet()">应用</button>
       </div>
     </div>
 
-    <div class="card"><div class="card-title">设备位姿</div><div id="devicePoses"></div></div>
-
-    <div class="card">
+    <!-- 手指 & 手势 -->
+    <div class="card glass">
       <div class="card-title">手指 & 手势 (0=伸直, 1=弯曲)</div>
-      <div class="grid2" id="fingerBends"></div>
-      <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="handGesture('left','open')">L 张开</button><button class="btn btn-outline btn-sm" onclick="handGesture('left','fist')">L 握拳</button><button class="btn btn-outline btn-sm" onclick="handGesture('left','point')">L 食指</button><button class="btn btn-outline btn-sm" onclick="handGesture('left','peace')">L 剪刀</button><button class="btn btn-outline btn-sm" onclick="handGesture('left','thumbs_up')">L 点赞</button><button class="btn btn-outline btn-sm" onclick="handGesture('left','rock')">L Rock</button><button class="btn btn-outline btn-sm" onclick="handGesture('left','gun')">L Gun</button><button class="btn btn-outline btn-sm" onclick="resetInputs('both')" style="margin-left:auto">重置输入</button></div>
-      <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="handGesture('right','open')">R 张开</button><button class="btn btn-outline btn-sm" onclick="handGesture('right','fist')">R 握拳</button><button class="btn btn-outline btn-sm" onclick="handGesture('right','point')">R 食指</button><button class="btn btn-outline btn-sm" onclick="handGesture('right','peace')">R 剪刀</button><button class="btn btn-outline btn-sm" onclick="handGesture('right','thumbs_up')">R 点赞</button><button class="btn btn-outline btn-sm" onclick="handGesture('right','rock')">R Rock</button><button class="btn btn-outline btn-sm" onclick="handGesture('right','gun')">R Gun</button></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">MMD 舞蹈</div>
-      <div class="grid3">
-        <div class="form-group"><label>VMD 路径</label><input type="text" id="cfgDanceVmd" onchange="markDirty()"></div>
-        <div class="form-group"><label>身高</label><input type="number" id="cfgDanceHeight" value="1.5" step="0.01" onchange="markDirty()"></div>
-        <div class="form-group"><label>速度</label><input type="number" id="cfgDanceSpeed" value="1.0" step="0.05" onchange="markDirty()"></div>
+      <div class="grid-2" id="fingerBends"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','open')">L 张开</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','fist')">L 握拳</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','point')">L 食指</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','peace')">L 剪刀</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','thumbs_up')">L 点赞</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','rock')">L Rock</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('left','gun')">L Gun</button>
+        <button class="btn btn-outline btn-sm" onclick="resetInputs('both')" style="margin-left:auto">重置输入</button>
       </div>
       <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','open')">R 张开</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','fist')">R 握拳</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','point')">R 食指</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','peace')">R 剪刀</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','thumbs_up')">R 点赞</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','rock')">R Rock</button>
+        <button class="btn btn-outline btn-sm" onclick="handGesture('right','gun')">R Gun</button>
+      </div>
+    </div>
+
+    <!-- MMD舞蹈 -->
+    <div class="card glass">
+      <div class="card-title">MMD 舞蹈</div>
+      <div class="grid-3">
+        <div class="field"><label>VMD 路径</label><input type="text" id="cfgDanceVmd" onchange="markDirty()"></div>
+        <div class="field"><label>身高</label><input type="number" id="cfgDanceHeight" value="1.5" step="0.01" onchange="markDirty()"></div>
+        <div class="field"><label>速度</label><input type="number" id="cfgDanceSpeed" value="1.0" step="0.05" onchange="markDirty()"></div>
+      </div>
+      <div class="btn-row" style="margin-top:14px">
         <button class="btn btn-success" onclick="playDance()">播放</button>
         <button class="btn btn-danger" onclick="stopDance()">停止</button>
         <span id="danceInfo" style="font-size:0.82rem;color:var(--text-secondary);display:none"></span>
       </div>
     </div>
 
-    <div class="card">
+    <!-- 快速动作 -->
+    <div class="card glass">
       <div class="card-title">快速动作</div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="runAction('nod_head',{count:1,speed:1},'点头',null)">点头</button>
@@ -439,7 +1076,6 @@
         <button class="btn btn-outline btn-sm" onclick="runAction('wave_hand',{side:'right',style:'hello'},'挥手',null)">挥手</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('bow',{depth:30},'鞠躬',null)">鞠躬</button>
       </div>
-
       <div class="toggle-row">
         <label class="toggle"><input type="checkbox" id="cfgIdle" onchange="toggleIdle(this.checked)"><span class="toggle-slider"></span></label>
         <span class="toggle-label">待机动画 (呼吸+微晃)</span>
@@ -447,9 +1083,9 @@
     </div>
   </div>
 
-  <!-- tab: vrchat -->
-  <div class="tab-content" id="tab-vrchat">
-    <div class="card">
+  <!-- ══ VRChat面板 ══ -->
+  <div class="panel" id="panel-vrchat">
+    <div class="card glass">
       <div class="card-title">VRChat 标准手势 (Index 骨骼)</div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'neutral'},'VRC 手势',null)">L 默认</button>
@@ -461,7 +1097,6 @@
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'gun'},'VRC 手势',null)">L Gun</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'left',gesture:'thumbs_up'},'VRC 手势',null)">L 点赞</button>
       </div>
-
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'neutral'},'VRC 手势',null)">R 默认</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'fist'},'VRC 手势',null)">R 握拳</button>
@@ -472,11 +1107,14 @@
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'gun'},'VRC 手势',null)">R Gun</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_gesture',{side:'right',gesture:'thumbs_up'},'VRC 手势',null)">R 点赞</button>
       </div>
-
-      <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'neutral'},'VRC 双手势',null)">双手默认</button><button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'fist'},'VRC 双手势',null)">双手握拳</button><button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'hand_open'},'VRC 双手势',null)">双手张开</button></div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'neutral'},'VRC 双手势',null)">双手默认</button>
+        <button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'fist'},'VRC 双手势',null)">双手握拳</button>
+        <button class="btn btn-primary btn-sm" onclick="runAction('vrc_gesture_both',{gesture:'hand_open'},'VRC 双手势',null)">双手张开</button>
+      </div>
     </div>
 
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">VRChat 移动 (Locomotion)</div>
       <div class="btn-row">
         <button class="btn btn-success btn-sm" onclick="runAction('vrc_walk',{direction:'forward'},'行走',null)">前</button>
@@ -493,7 +1131,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">VRChat 交互</div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_pickup',{side:'right'},'拾取',null)">R 拾取</button>
@@ -502,15 +1140,15 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">VRChat FBT 预设 & 动作</div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_sit',{},'坐下',null)">坐下</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_crouch',{},'蹲下',null)">蹲下</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_handshake',{side:'right'},'握手',null)">握手</button>
       </div>
-      <div class="btn-row" style="margin-top:10px">
-        <span class="toggle-label">FBT 校准:</span>
+      <div class="btn-row" style="margin-top:12px">
+        <span class="toggle-label" style="font-weight:620">FBT 校准:</span>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'short'},'FBT 校准',null)">矮(1.2m)</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'medium'},'FBT 校准',null)">中(1.5m)</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vrc_fbt_calibrate',{height:'tall'},'FBT 校准',null)">高(1.8m)</button>
@@ -518,89 +1156,127 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card glass">
+      <div class="card-title">VRChat 菜单 & 选择 / 拖拽</div>
+      <div class="menu-group"><span class="menu-tag">菜单:</span>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_left_menu',{side:'left'},'左手菜单',null)">左手菜单</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_right_menu',{side:'right'},'右手菜单',null)">右手菜单</button>
+      </div>
+      <div class="menu-group"><span class="menu-tag">选择:</span>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_select',{side:'left'},'Z确认',null)">左手 Z / 确认</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_select',{side:'right'},'Z确认',null)">右手 Z / 确认</button>
+      </div>
+      <div class="menu-group"><span class="menu-tag">拖拽:</span>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_drag_start',{side:'left'},'开始拖拽',null)">左手抓取</button>
+        <button class="btn btn-outline btn-sm" onclick="runAction('vrc_drag_start',{side:'right'},'开始拖拽',null)">右手抓取</button>
+        <button class="btn btn-danger btn-sm" onclick="runAction('vrc_drag_end',{},'结束拖拽',null)">释放</button>
+      </div>
+    </div>
+
+    <div class="card glass">
+      <div class="card-title">快捷键</div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="cfgKeybindsEnabled" checked onchange="markDirty()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label">启用全局快捷键（点击输入框后按任意键录制）</span>
+      </div>
+      <div class="kb-grid">
+        <div class="kb-item"><label>左手菜单</label><div class="kb-input" id="kbLeftMenu" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+        <div class="kb-item"><label>右手菜单</label><div class="kb-input" id="kbRightMenu" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+        <div class="kb-item"><label>左手 Z / 确认</label><div class="kb-input" id="kbSelectLeft" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+        <div class="kb-item"><label>右手 Z / 确认</label><div class="kb-input" id="kbSelectRight" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+        <div class="kb-item"><label>左手抓取</label><div class="kb-input" id="kbDragLeft" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+        <div class="kb-item"><label>右手抓取</label><div class="kb-input" id="kbDragRight" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+        <div class="kb-item"><label>释放 / 结束拖拽</label><div class="kb-input" id="kbDragEnd" onclick="recordKeybind(this)" onkeydown="captureKeybind(event,this)" tabindex="0"></div></div>
+      </div>
+    </div>
+
+    <div class="card glass">
       <div class="card-title">VRChat 状态</div>
       <div class="info-box" id="vrchatState">-</div>
     </div>
   </div>
 
-  <!-- tab: emotion -->
-  <div class="tab-content" id="tab-emotion">
-    <div class="card">
+  <!-- ══ 情感面板 ══ -->
+  <div class="panel" id="panel-emotion">
+    <div class="card glass">
       <div class="card-title">VRChat 角色情感</div>
-      <div class="emotion-grid" id="emotionChips"></div>
-      <div class="form-group" style="margin-top:14px">
+      <div class="emo-grid" id="emotionChips"></div>
+      <div class="field" style="margin-top:16px">
         <label>强度</label>
         <div class="range-row"><input type="range" id="emoIntensity" min="0" max="1" step="0.05" value="1" oninput="this.nextElementSibling.textContent=this.value"><span class="range-val">1.0</span></div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="setEmotionText()">应用情感</button>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="setEmotionText()">应用情感</button>
+      </div>
     </div>
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">情感状态</div>
       <div class="info-box" id="emotionState">-</div>
     </div>
   </div>
 
-  <!-- tab: tracking -->
-  <div class="tab-content" id="tab-tracking">
-    <div class="card">
+  <!-- ══ 跟随面板 ══ -->
+  <div class="panel" id="panel-tracking">
+    <div class="card glass">
       <div class="card-title">VRChat HMD 注视目标</div>
-      <div class="grid3">
-        <div class="form-group"><label>X</label><input type="number" id="lookX" value="0" step="0.1"></div>
-        <div class="form-group"><label>Y</label><input type="number" id="lookY" value="1.5" step="0.1"></div>
-        <div class="form-group"><label>Z</label><input type="number" id="lookZ" value="-3" step="0.1"></div>
+      <div class="grid-3">
+        <div class="field"><label>X</label><input type="number" id="lookX" value="0" step="0.1"></div>
+        <div class="field"><label>Y</label><input type="number" id="lookY" value="1.5" step="0.1"></div>
+        <div class="field"><label>Z</label><input type="number" id="lookZ" value="-3" step="0.1"></div>
       </div>
-      <div class="btn-row">
+      <div class="btn-row" style="margin-top:14px">
         <button class="btn btn-primary btn-sm" onclick="lookAt()">注视</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('reset_head',{},'重置头部',null)">重置头部</button>
         <button class="btn btn-success btn-sm" onclick="startTrack()">持续追踪</button>
         <button class="btn btn-danger btn-sm" onclick="runAction('stop_tracking',{},'停止追踪',null)">停止追踪</button>
       </div>
     </div>
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">朝向角度</div>
-      <div class="grid2">
-        <div class="form-group"><label>Yaw (°)</label><input type="number" id="angleYaw" value="0" step="5"></div>
-        <div class="form-group"><label>Pitch (°)</label><input type="number" id="anglePitch" value="0" step="5"></div>
+      <div class="grid-2">
+        <div class="field"><label>Yaw (°)</label><input type="number" id="angleYaw" value="0" step="5"></div>
+        <div class="field"><label>Pitch (°)</label><input type="number" id="anglePitch" value="0" step="5"></div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="lookAtDir()">朝向</button>
+      <div class="btn-row" style="margin-top:12px"><button class="btn btn-primary btn-sm" onclick="lookAtDir()">朝向</button></div>
     </div>
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">追踪状态</div>
       <div class="info-box" id="trackState">-</div>
     </div>
   </div>
 
-  <!-- tab: vision -->
-  <div class="tab-content" id="tab-vision">
-    <div class="card">
+  <!-- ══ 视觉面板 ══ -->
+  <div class="panel" id="panel-vision">
+    <div class="card glass">
       <div class="card-title">摄像头配置</div>
-      <div class="grid3">
-        <div class="form-group"><label>水平 FOV</label><input type="number" id="visFovH" value="70" step="1" onchange="saveVisionCfg()"></div>
-        <div class="form-group"><label>垂直 FOV</label><input type="number" id="visFovV" value="50" step="1" onchange="saveVisionCfg()"></div>
-        <div class="form-group"><label>注视距离(m)</label><input type="number" id="visDist" value="2.0" step="0.1" onchange="saveVisionCfg()"></div>
+      <div class="grid-3">
+        <div class="field"><label>水平 FOV</label><input type="number" id="visFovH" value="70" step="1" onchange="saveVisionCfg()"></div>
+        <div class="field"><label>垂直 FOV</label><input type="number" id="visFovV" value="50" step="1" onchange="saveVisionCfg()"></div>
+        <div class="field"><label>注视距离(m)</label><input type="number" id="visDist" value="2.0" step="0.1" onchange="saveVisionCfg()"></div>
       </div>
-      <div class="grid2" style="margin-top:8px">
-        <div class="form-group"><label>注视平滑度</label><div class="range-row"><input type="range" id="visSmooth" min="0.01" max="1" step="0.01" value="0.15" oninput="this.nextElementSibling.textContent=this.value;saveVisionCfg()"><span class="range-val">0.15</span></div></div>
+      <div class="grid-2" style="margin-top:10px">
+        <div class="field"><label>注视平滑度</label><div class="range-row"><input type="range" id="visSmooth" min="0.01" max="1" step="0.01" value="0.15" oninput="this.nextElementSibling.textContent=this.value;saveVisionCfg()"><span class="range-val">0.15</span></div></div>
       </div>
       <div class="toggle-row">
         <label class="toggle"><input type="checkbox" id="visReactExpr" checked onchange="saveVisionCfg()"><span class="toggle-slider"></span></label><span class="toggle-label">表情→情感同步</span>
-        <label class="toggle" style="margin-left:14px"><input type="checkbox" id="visReactGesture" checked onchange="saveVisionCfg()"><span class="toggle-slider"></span></label><span class="toggle-label">手势→VR同步</span>
+        <label class="toggle" style="margin-left:16px"><input type="checkbox" id="visReactGesture" checked onchange="saveVisionCfg()"><span class="toggle-slider"></span></label><span class="toggle-label">手势→VR同步</span>
       </div>
     </div>
-    <div class="card">
+
+    <div class="card glass">
       <div class="card-title">模拟人脸输入 (调试)</div>
-      <div class="grid3">
-        <div class="form-group"><label>屏幕 X (0-1)</label><input type="number" id="fakeFaceX" value="0.5" step="0.05" min="0" max="1"></div>
-        <div class="form-group"><label>屏幕 Y (0-1)</label><input type="number" id="fakeFaceY" value="0.4" step="0.05" min="0" max="1"></div>
-        <div class="form-group"><label>距离(m)</label><input type="number" id="fakeFaceD" value="2.0" step="0.1"></div>
+      <div class="grid-3">
+        <div class="field"><label>屏幕 X (0-1)</label><input type="number" id="fakeFaceX" value="0.5" step="0.05" min="0" max="1"></div>
+        <div class="field"><label>屏幕 Y (0-1)</label><input type="number" id="fakeFaceY" value="0.4" step="0.05" min="0" max="1"></div>
+        <div class="field"><label>距离(m)</label><input type="number" id="fakeFaceD" value="2.0" step="0.1"></div>
       </div>
-      <div class="btn-row">
+      <div class="btn-row" style="margin-top:12px">
         <button class="btn btn-primary btn-sm" onclick="fakeFace()">模拟人脸</button>
         <button class="btn btn-outline btn-sm" onclick="runAction('vision_face_lost',{},'人脸丢失',null)">人脸丢失</button>
       </div>
     </div>
-    <div class="card">
+
+    <div class="card glass">
       <div class="card-title">模拟表情/手势 (调试)</div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="runAction('vision_expression',{expression:'happy',confidence:0.8},'模拟表情',null)">Happy</button>
@@ -615,57 +1291,53 @@
         <button class="btn btn-outline btn-sm" onclick="runAction('vision_gesture',{gesture:'thumbs_up',side:'right',confidence:0.9},'模拟手势',null)">ThumbsUp</button>
       </div>
     </div>
-    <div class="card">
+
+    <div class="card glass">
       <div class="card-title">视觉状态</div>
       <div class="info-box" id="visionState">-</div>
     </div>
 
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">自主视觉截图 — 游戏画面给 AI 分析</div>
-      <div class="grid2" style="margin-bottom:12px">
-        <div class="form-group"><label>显示器</label><select id="capMonitor" onchange="markDirty()"></select></div>
-        <div class="form-group"><label>JPEG 质量</label><div class="range-row"><input type="range" id="capQuality" min="10" max="100" step="5" value="75" oninput="this.nextElementSibling.textContent=this.value;markDirty()"><span class="range-val">75</span></div></div>
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="field"><label>显示器</label><select id="capMonitor" onchange="markDirty()"></select></div>
+        <div class="field"><label>JPEG 质量</label><div class="range-row"><input type="range" id="capQuality" min="10" max="100" step="5" value="75" oninput="this.nextElementSibling.textContent=this.value;markDirty()"><span class="range-val">75</span></div></div>
       </div>
-      <div class="grid2">
-        <div class="form-group"><label>缩放比例</label><select id="capScale" onchange="markDirty()" style="width:auto"><option value="1.0">100%</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="0.25">25%</option></select></div>
+      <div class="grid-2">
+        <div class="field"><label>缩放比例</label><select id="capScale" onchange="markDirty()" style="width:auto"><option value="1.0">100%</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="0.25">25%</option></select></div>
       </div>
-      <div class="btn-row">
+      <div class="btn-row" style="margin-top:14px">
         <button class="btn btn-primary" onclick="captureScreen()">截图发送给 AI</button>
         <span id="capStatus" style="font-size:0.82rem;color:var(--text-secondary);align-self:center"></span>
       </div>
-      <div style="margin-top:12px;max-height:360px;overflow:auto;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);text-align:center" id="capPreview"><span style="color:var(--text-muted);display:inline-block;padding:40px">点击「截图发送给 AI」获取游戏画面</span></div>
+      <div style="margin-top:14px;max-height:380px;overflow:auto;background:rgba(252,250,246,0.65);border-radius:var(--radius-sm);border:1.2px solid rgba(200,190,176,0.35);text-align:center" id="capPreview"><span style="color:var(--text-muted);display:inline-block;padding:42px">点击「截图发送给 AI」获取游戏画面</span></div>
     </div>
   </div>
 
-  <!-- tab: driver -->
-  <div class="tab-content" id="tab-driver">
-    <div class="card">
+  <!-- ══ 驱动面板 ══ -->
+  <div class="panel" id="panel-driver">
+    <div class="card glass">
       <div class="card-title">SteamVR 驱动状态</div>
-      <div class="grid2" style="margin-bottom:12px">
-        <div class="info-box">
-          驱动注册: <span class="highlight" id="drvRegistered">-</span>
-        </div>
-        <div class="info-box">
-          vrpathreg: <span class="highlight" id="drvVrpathreg">-</span>
-        </div>
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="info-box">驱动注册: <span class="hl" id="drvRegistered">-</span></div>
+        <div class="info-box">vrpathreg: <span class="hl" id="drvVrpathreg">-</span></div>
       </div>
-      <div class="info-box" id="drvDetail" style="margin-bottom:14px">-</div>
+      <div class="info-box" id="drvDetail" style="margin-bottom:16px">-</div>
       <div class="btn-row">
         <button class="btn btn-primary" id="btnDriverOneclick" onclick="driverOneclick()">一键启动 (注册→重启SteamVR→流送)</button>
       </div>
-      <div class="btn-row">
+      <div class="btn-row" style="margin-top:12px">
         <button class="btn btn-outline" id="btnRegisterDriver" onclick="registerDriver()">注册驱动</button>
         <button class="btn btn-outline" id="btnUnregisterDriver" onclick="unregisterDriver()">注销驱动</button>
         <button class="btn btn-warning" id="btnRestartSteamVR" onclick="restartSteamVR()">重启 SteamVR</button>
       </div>
-
-      <div class="info-box" style="font-size:0.78rem;color:var(--text-secondary);margin-top:12px">
+      <div class="info-box" style="font-size:0.78rem;color:var(--text-secondary);margin-top:14px">
         流程: 注册驱动(一次性) → 重启 SteamVR → 驱动自动加载并监听 UDP 端口 → 发送 UDP 包控制 avatar
       </div>
     </div>
-    <div class="card">
+    <div class="card glass">
       <div class="card-title">驱动目录路径</div>
-      <div class="form-group">
+      <div class="field">
         <label>AnyaDance 驱动目录（需包含 driver.vrdrivermanifest）</label>
         <input type="text" id="cfgAnyaDancePath" placeholder="自动检测中..." onchange="markDirty()">
       </div>
@@ -675,15 +1347,15 @@
     </div>
   </div>
 
-  <div class="card">
+  <!-- 底部保存栏 -->
+  <div class="card glass">
     <div class="flex-between">
       <span id="dirtyHint" style="font-size:0.82rem;color:var(--warning);display:none">配置已修改，请保存</span>
       <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()" style="margin-left:auto">保存所有设置</button>
-
     </div>
   </div>
 
-  <div id="toastContainer" class="toast-container"></div>
+  <div id="toastContainer" class="toast-stack"></div>
 
 </div>
 
@@ -716,10 +1388,10 @@ function setBtnLoading(btn, loading) {
   if (!btn) return;
   if (loading) {
     btn.dataset.originalText = btn.textContent;
-    btn.classList.add('btn-loading');
+    btn.classList.add('loading');
     btn.textContent = '...';
   } else {
-    btn.classList.remove('btn-loading');
+    btn.classList.remove('loading');
     btn.textContent = btn.dataset.originalText || btn.textContent;
   }
 }
@@ -736,7 +1408,7 @@ function setLastAction(text, type) {
   var el = document.getElementById('lastAction');
   if (el) {
     el.textContent = text;
-    el.className = 'status-pill ' + lastActionType;
+    el.className = 'pill ' + lastActionType;
   }
 }
 
@@ -756,7 +1428,6 @@ async function runAction(entryId, params, label, btnId) {
     setLastAction(label + ' 失败: ' + err, 'error');
     showToast(label + ' 失败: ' + err, 'error', 5000);
   } else {
-
     var extra = '';
     if (r && typeof r === 'object' && r.status) extra = ' (' + r.status + ')';
     setLastAction(label + ' 成功' + extra, 'success');
@@ -781,7 +1452,6 @@ function fireEntry(id, params) {
 
 async function callEntry(id, params) {
   var argObj = params || {};
-  // POST /runs → 插件框架标准入口调用
   var resp = await fetch(RUNS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -792,7 +1462,6 @@ async function callEntry(id, params) {
   var runId = data.run_id;
   if (!runId) { console.error('no run_id', data); return { ok: false, error: 'no run_id' }; }
 
-  // 轮询 /runs/{run_id}
   var deadline = Date.now() + RUN_TIMEOUT_MS;
   while (Date.now() < deadline) {
     var poll = await fetch(RUNS_URL + '/' + runId);
@@ -803,17 +1472,12 @@ async function callEntry(id, params) {
       if (!exp.ok) { await delay(RUN_POLL_MS); continue; }
       var ed = await exp.json();
       var items = ed.items || [];
-      // 找 trigger_response 条目（TriggerResult 序列化）
       var ti = items.find(function(x) { return x.label === 'trigger_response'; });
       if (!ti) ti = items.find(function(x) { return x.type === 'json' && x.json; });
       if (!ti) ti = items[0] || {};
-
       var jsonData = ti.json || {};
-      // plugin_response 是 ok() 信封: {success:true, code:0, data:{...}, ...}
-      // data 里才是插件 entry 的实际返回值
       var pr = jsonData.plugin_response || jsonData;
       if (pr && pr.success) {
-        // 如果 data 里还有 value 包装（Ok dataclass 序列化），逐层解开
         var actual = pr.data;
         while (actual && typeof actual === 'object' && !Array.isArray(actual) &&
                Object.keys(actual).length === 1 && actual.value !== undefined) {
@@ -821,12 +1485,10 @@ async function callEntry(id, params) {
         }
         return actual;
       }
-      // 返回错误时统一为 {ok:false, error: ...}
       if (pr && pr.success === false) {
         return { ok: false, error: pr.error || pr.message || pr.data || '插件返回错误' };
       }
       return pr;
-
     }
     if (rec.status === 'failed' || rec.status === 'canceled' || rec.status === 'timeout') {
       console.error('run', rec.status, rec.error);
@@ -842,7 +1504,6 @@ async function refreshState() {
   if (drag) return;
   try {
     var r = await callEntry('get_dashboard_state', {});
-    // get_dashboard_state 返回的是完整状态对象（Ok 包装已被 callEntry 解开）
     if (r && typeof r === 'object' && !Array.isArray(r)) {
       state = r;
     }
@@ -853,9 +1514,9 @@ async function refreshState() {
 
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
   refreshState();
 }
 
@@ -893,7 +1554,7 @@ function render() {
     const an = state.animation || {};
     document.getElementById('cfgIdle').checked = an.idle_enabled || false;
     const vcfg = v.config || {};
-    if (document.getElementById('tab-vision').classList.contains('active')) {
+    if (document.getElementById('panel-vision').classList.contains('active')) {
       document.getElementById('visFovH').value = vcfg.camera_fov_h || 70;
       document.getElementById('visFovV').value = vcfg.camera_fov_v || 50;
       document.getElementById('visDist').value = vcfg.look_distance || 2.0;
@@ -901,22 +1562,33 @@ function render() {
       document.getElementById('visReactExpr').checked = vcfg.react_to_expression !== false;
       document.getElementById('visReactGesture').checked = vcfg.react_to_gesture !== false;
     }
+    const k = state.keybinds || {};
+    document.getElementById('cfgKeybindsEnabled').checked = k.enabled !== false;
+    document.getElementById('kbLeftMenu').textContent = k.left_menu || '';
+    document.getElementById('kbRightMenu').textContent = k.right_menu || '';
+    document.getElementById('kbSelectLeft').textContent = k.select_left || '';
+    document.getElementById('kbSelectRight').textContent = k.select_right || '';
+    document.getElementById('kbDragLeft').textContent = k.drag_left || '';
+    document.getElementById('kbDragRight').textContent = k.drag_right || '';
+    document.getElementById('kbDragEnd').textContent = k.drag_end || '';
   }
 
+  // ======== 设备位姿渲染 - 核心 ========
   const devices = state.devices || {};
   const deviceNames = { hmd:'HMD', left_controller:'左控制器', right_controller:'右控制器', hip:'髋部', left_foot:'左脚', right_foot:'右脚' };
-  let dh = '<div class="grid3">';
+  let dh = '<div class="grid-3">';
   for (const [k, l] of Object.entries(deviceNames)) {
     const d = devices[k] || { position:[0,0,0], rotation:[0,0,0,1] };
-    dh += `<div class="device-section" data-device="${k}" oncontextmenu="return false" onpointerdown="startCardDrag(this,event)"><h4>${l}<span class="hint">左键移动 · 右键深度 · 中键旋转 · 长按移动</span></h4><div class="pos-row">`;
-    ['X','Y','Z'].forEach((a, i) => { dh += `<div class="form-group"><label>${a}</label><input type="number" data-device="${k}" data-type="pos" data-axis="${i}" value="${d.position[i].toFixed(3)}" step="0.001" onchange="commitDevicePos('${k}')" onpointerdown="startDrag(this,event)"></div>`; });
-    dh += `</div><div class="pos-row" style="margin-top:8px">`;
-    ['RX','RY','RZ','RW'].forEach((a, i) => { dh += `<div class="form-group"><label>${a}</label><input type="number" data-device="${k}" data-type="rot" data-axis="${i}" value="${d.rotation[i].toFixed(4)}" step="0.01" onchange="commitDeviceRot('${k}')" onpointerdown="startDrag(this,event)"></div>`; });
+    dh += `<div class="device-card" data-device="${k}" oncontextmenu="return false" onpointerdown="startCardDrag(this,event)"><h4>${l}<span class="hint">左键移动 · 右键深度 · 中键旋转</span></h4><div class="pose-grid">`;
+    ['X','Y','Z'].forEach((a, i) => { dh += `<div class="field"><label>${a}</label><input type="number" data-device="${k}" data-type="pos" data-axis="${i}" value="${d.position[i].toFixed(3)}" step="0.001" onchange="commitDevicePos('${k}')" onpointerdown="startDrag(this,event)"></div>`; });
+    dh += `</div><div class="pose-grid" style="margin-top:10px">`;
+    ['RX','RY','RZ','RW'].forEach((a, i) => { dh += `<div class="field"><label>${a}</label><input type="number" data-device="${k}" data-type="rot" data-axis="${i}" value="${d.rotation[i].toFixed(4)}" step="0.01" onchange="commitDeviceRot('${k}')" onpointerdown="startDrag(this,event)"></div>`; });
     dh += '</div></div>';
   }
   dh += '</div>';
   document.getElementById('devicePoses').innerHTML = dh;
 
+  // 手指弯曲
   const inputs = state.inputs || {};
   const fingerNames = ['thumb','index','middle','ring','pinky'];
   const fingerLabels = { thumb:'拇指', index:'食指', middle:'中指', ring:'无名指', pinky:'小指' };
@@ -925,7 +1597,7 @@ function render() {
     const label = side==='left'?'左手':'右手';
     const inp = inputs[side] || {};
     const bends = inp.finger_bends || {};
-    fh += `<div class="device-section"><h4>${label}</h4><div class="finger-row">`;
+    fh += `<div class="device-card"><h4>${label}</h4><div class="finger-row">`;
     for (const f of fingerNames) {
       fh += `<div class="finger-item"><label>${fingerLabels[f]}</label><input type="range" min="0" max="1" step="0.05" value="${bends[f]||0}" oninput="this.nextElementSibling.textContent=this.value;setFinger('${side}','${f}',this.value)"><span class="range-val">${(bends[f]||0).toFixed(2)}</span></div>`;
     }
@@ -933,6 +1605,7 @@ function render() {
   }
   document.getElementById('fingerBends').innerHTML = fh;
 
+  // MMD舞蹈状态
   const dance = state.dance || {};
   if (dance.playing || dance.total_frames > 0) {
     const di = document.getElementById('danceInfo');
@@ -940,22 +1613,26 @@ function render() {
     di.textContent = dance.playing ? `播放中 (${dance.current_frame}/${dance.total_frames})` : `已停止 (${dance.total_frames}帧)`;
   }
 
+  // 情感
   const emo = state.emotion || {};
   const avEmo = emo.available_emotions || [];
   document.getElementById('emotionChips').innerHTML = avEmo.map(em => {
     const act = em === (emo.current_emotion || 'neutral') ? ' active' : '';
-    return `<span class="emotion-chip${act}" onclick="runAction('set_emotion',{emotion:'${em}',intensity:parseFloat(document.getElementById('emoIntensity').value)},'设置情感',null)">${em}</span>`;
+    return `<span class="emo-chip${act}" onclick="runAction('set_emotion',{emotion:'${em}',intensity:parseFloat(document.getElementById('emoIntensity').value)},'设置情感',null)">${em}</span>`;
   }).join('');
   document.getElementById('emoIntensity').value = emo.intensity || 1.0;
   document.getElementById('emotionState').textContent =
     `情感: ${emo.current_emotion} | 强度: ${emo.intensity || 0}`;
 
+  // 追踪状态
   document.getElementById('trackState').textContent =
     `追踪: ${t.tracking?'ON':'OFF'} | 目标: ${t.target || '-'} | Yaw: ${(t.current_yaw_deg||0).toFixed(1)}° | Pitch: ${(t.current_pitch_deg||0).toFixed(1)}° | 平滑: ${t.lerp_factor||0.12}`;
 
+  // 视觉状态
   document.getElementById('visionState').textContent =
     `人脸: ${v.face_detected?'检测中 @ '+JSON.stringify(v.face_position):'无'} | 表情: ${v.expression||'-'} | 手势: ${v.last_gesture||'-'} | 自动环视: ${v.auto_look?'ON':'OFF'}`;
 
+  // 截图
   const sc = state.screen_capture || {};
   const monitors = sc.monitors || [];
   if (!dirty && monitors.length > 0) {
@@ -977,9 +1654,11 @@ function render() {
       `上次: ${sc.last_capture.width}x${sc.last_capture.height}, ${sc.last_capture.size_kb}KB, ${sc.last_capture.elapsed_ms}ms`;
   }
 
+  // VRChat状态
   document.getElementById('vrchatState').textContent =
     `身高: ${vc.avatar_height||1.5}m | 移动中: ${vc.locomoting?'YES':'NO'} | 可用手势: ${(vc.available_gestures||[]).join(', ')}`;
 
+  // 驱动状态
   const drv = state.driver || {};
   document.getElementById('drvRegistered').textContent = drv.driver_registered ? '已注册' : '未注册';
   document.getElementById('drvRegistered').style.color = drv.driver_registered ? 'var(--success)' : 'var(--text-muted)';
@@ -995,7 +1674,13 @@ function render() {
 async function startStream() { await runAction('start_stream', {}, '开始流送', 'btnStartStream'); }
 async function stopStream() { await runAction('stop_stream', {}, '停止流送', 'btnStopStream'); }
 async function sendPacket() { await runAction('send_single_packet', {}, '发送单次数据包', null); }
-async function applyPreset(n) { await runAction('apply_preset', {preset:n}, '应用预设', null); }
+async function applyPreset(n) {
+  await runAction('apply_preset', {preset:n}, '应用预设', null);
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById('preset-' + n);
+  if (btn) btn.classList.add('selected');
+}
+
 async function mirrorHands() { await runAction('mirror_hands', {enabled:true}, '镜像手部', null); }
 async function mirrorFeet() { await runAction('mirror_feet', {enabled:true}, '镜像脚部', null); }
 async function playDance() { await runAction('play_dance', {vmd_path:document.getElementById('cfgDanceVmd').value}, '播放舞蹈', null); }
@@ -1003,9 +1688,94 @@ async function stopDance() { await runAction('stop_dance', {}, '停止舞蹈', n
 async function handGesture(s,g) { await runAction('hand_gesture', {side:s,gesture:g}, '手势', null); }
 async function resetInputs(s) { await runAction('reset_inputs', {side:s}, '重置输入', null); }
 async function toggleIdle(on) { await runAction(on?'start_idle':'stop_idle', {}, '待机动画', null); }
-async function setEmotionText() { const em = document.querySelector('.emotion-chip.active'); const ename = em ? em.textContent : 'neutral'; await runAction('set_emotion', {emotion:ename,intensity:parseFloat(document.getElementById('emoIntensity').value)}, '设置情感', null); }
+async function setEmotionText() { const em = document.querySelector('.emo-chip.active'); const ename = em ? em.textContent : 'neutral'; await runAction('set_emotion', {emotion:ename,intensity:parseFloat(document.getElementById('emoIntensity').value)}, '设置情感', null); }
 
 
+/* ========== 快捷键录制与监听 ========== */
+let recordingKeybindEl = null;
+
+function keybindSpec() {
+  return [
+    { id: 'kbLeftMenu', action: 'vrc_left_menu', params: {side:'left'}, label: '左手菜单' },
+    { id: 'kbRightMenu', action: 'vrc_right_menu', params: {side:'right'}, label: '右手菜单' },
+    { id: 'kbSelectLeft', action: 'vrc_select', params: {side:'left'}, label: '左手 Z/确认' },
+    { id: 'kbSelectRight', action: 'vrc_select', params: {side:'right'}, label: '右手 Z/确认' },
+    { id: 'kbDragLeft', action: 'vrc_drag_start', params: {side:'left'}, label: '左手抓取' },
+    { id: 'kbDragRight', action: 'vrc_drag_start', params: {side:'right'}, label: '右手抓取' },
+    { id: 'kbDragEnd', action: 'vrc_drag_end', params: {}, label: '释放' },
+  ];
+}
+
+function recordKeybind(el) {
+  if (recordingKeybindEl) recordingKeybindEl.classList.remove('recording');
+  recordingKeybindEl = el;
+  el.classList.add('recording');
+  el.focus();
+}
+
+function keybindDisplay(e) {
+  const parts = [];
+  if (e.ctrlKey) parts.push('Ctrl');
+  if (e.altKey) parts.push('Alt');
+  if (e.shiftKey) parts.push('Shift');
+  if (e.metaKey) parts.push('Meta');
+  if (e.code && !e.code.startsWith('Control') && !e.code.startsWith('Alt') && !e.code.startsWith('Shift') && !e.code.startsWith('Meta')) {
+    parts.push(e.code.replace(/^Key|^Digit|^Numpad/, ''));
+  }
+  return parts.join('+');
+}
+
+function captureKeybind(e, el) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.code === 'Escape') {
+    el.textContent = '';
+    el.classList.remove('recording');
+    recordingKeybindEl = null;
+    markDirty();
+    el.blur();
+    return;
+  }
+  const display = keybindDisplay(e);
+  if (!display) return;
+  el.textContent = display;
+  el.classList.remove('recording');
+  recordingKeybindEl = null;
+  markDirty();
+  el.blur();
+}
+
+function matchesKeybind(e, bound) {
+  if (!bound) return false;
+  const want = bound.split('+').map(s => s.trim()).filter(Boolean);
+  const pressed = [];
+  if (e.ctrlKey) pressed.push('Ctrl');
+  if (e.altKey) pressed.push('Alt');
+  if (e.shiftKey) pressed.push('Shift');
+  if (e.metaKey) pressed.push('Meta');
+  if (e.code && !e.code.startsWith('Control') && !e.code.startsWith('Alt') && !e.code.startsWith('Shift') && !e.code.startsWith('Meta')) {
+    pressed.push(e.code.replace(/^Key|^Digit|^Numpad/, ''));
+  }
+  return want.length === pressed.length && want.every(k => pressed.includes(k));
+}
+
+document.addEventListener('keydown', async function(e) {
+  if (!document.getElementById('cfgKeybindsEnabled').checked) return;
+  if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+  if (recordingKeybindEl) return;
+  const spec = keybindSpec();
+  for (const item of spec) {
+    const el = document.getElementById(item.id);
+    if (matchesKeybind(e, el.textContent.trim())) {
+      e.preventDefault();
+      await runAction(item.action, item.params, item.label, null);
+      return;
+    }
+  }
+});
+
+
+/* ========== 拖拽交互系统 - 设备位姿核心 ========== */
 let drag = null;
 let lastCardCommit = 0;
 let cardLongPress = null;
@@ -1096,10 +1866,9 @@ function beginCardDrag(card, ev, mode) {
     baseSensitivity: mode === 'rotate' ? 0.5 : 0.01,
     pending: false
   };
-  card.classList.add('card-drag', mode);
+  card.classList.add('dragging', mode);
   try { card.setPointerCapture(ev.pointerId); } catch {}
 }
-
 
 
 function readDevicePos(dev) {
@@ -1130,7 +1899,6 @@ function writeDeviceRot(dev, rot) {
   });
 }
 
-// 拖拽过程中禁止文字选择
 document.addEventListener('selectstart', (ev) => {
   if (drag) ev.preventDefault();
 });
@@ -1217,14 +1985,14 @@ function cleanupDrag(commit) {
     return;
   }
 
-  d.card.classList.remove('card-drag', d.mode);
+  d.card.classList.remove('dragging', d.mode);
   try { d.card.releasePointerCapture(d.pointerId); } catch {}
   drag = null;
   if (commit) commitDevicePose(d.device, true);
 }
 
 document.getElementById('devicePoses').addEventListener('wheel', (ev) => {
-  const card = ev.target.closest('.device-section');
+  const card = ev.target.closest('.device-card');
   if (!card || document.activeElement && document.activeElement.tagName === 'INPUT') return;
   ev.preventDefault();
   const dev = card.dataset.device;
@@ -1256,7 +2024,8 @@ async function setDeviceRot(dev, axis, val) {
 
 function commitDevicePos(dev, flush = true) {
   const pos = readDevicePos(dev);
-  const params = { device: dev, position_x: pos[0], position_y: pos[1], position_z: pos[2] };
+  const rot = readDeviceRot(dev);
+  const params = { device: dev, position_x: pos[0], position_y: pos[1], position_z: pos[2], rotation_x: rot[0], rotation_y: rot[1], rotation_z: rot[2], rotation_w: rot[3] };
   if (flush) return runAction('set_device_pose', params, '设置位姿', null);
   fireEntry('set_device_pose', params);
   return Promise.resolve({ ok: true });
@@ -1264,7 +2033,8 @@ function commitDevicePos(dev, flush = true) {
 
 function commitDeviceRot(dev, flush = true) {
   const rot = readDeviceRot(dev);
-  const params = { device: dev, rotation_x: rot[0], rotation_y: rot[1], rotation_z: rot[2], rotation_w: rot[3] };
+  const pos = readDevicePos(dev);
+  const params = { device: dev, rotation_x: rot[0], rotation_y: rot[1], rotation_z: rot[2], rotation_w: rot[3], position_x: pos[0], position_y: pos[1], position_z: pos[2] };
   if (flush) return runAction('set_device_pose', params, '设置旋转', null);
   fireEntry('set_device_pose', params);
   return Promise.resolve({ ok: true });
@@ -1306,6 +2076,14 @@ async function saveSettings() {
     dance_speed: parseFloat(document.getElementById('cfgDanceSpeed').value),
     dance_vmd_path: document.getElementById('cfgDanceVmd').value,
     anyadance_path: document.getElementById('cfgAnyaDancePath').value,
+    keybinds_enabled: document.getElementById('cfgKeybindsEnabled').checked,
+    keybind_left_menu: document.getElementById('kbLeftMenu').textContent.trim(),
+    keybind_right_menu: document.getElementById('kbRightMenu').textContent.trim(),
+    keybind_select_left: document.getElementById('kbSelectLeft').textContent.trim(),
+    keybind_select_right: document.getElementById('kbSelectRight').textContent.trim(),
+    keybind_drag_left: document.getElementById('kbDragLeft').textContent.trim(),
+    keybind_drag_right: document.getElementById('kbDragRight').textContent.trim(),
+    keybind_drag_end: document.getElementById('kbDragEnd').textContent.trim(),
   }, '保存设置', 'btnSaveSettings');
   if (r && !r.error) { dirty = false; document.getElementById('dirtyHint').style.display = 'none'; }
 }
@@ -1325,19 +2103,19 @@ async function captureScreen() {
     document.getElementById('capStatus').textContent =
       `${r.width}x${r.height}, ${r.size_kb}KB, ${r.elapsed_ms}ms`;
     const preview = document.getElementById('capPreview');
-    preview.innerHTML = `<img src="data:image/jpeg;base64,${r.image_base64}" style="max-width:100%;height:auto;border-radius:6px" alt="游戏截图">`;
+    preview.innerHTML = `<img src="data:image/jpeg;base64,${r.image_base64}" style="max-width:100%;height:auto;border-radius:10px" alt="游戏截图">`;
     showToast('截图成功', 'success');
   } else {
     var capErr = (r && (r.error || r.message)) ? ': ' + (r.error || r.message) : '';
     document.getElementById('capStatus').textContent = '截图失败' + capErr;
     showToast('截图失败' + capErr, 'error');
   }
-
 }
 
 
 refreshState();
 setInterval(refreshState, 2000);
 </script>
+
 </body>
 </html>

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 
 class VrInputService:
     """控制器输入管理：按键/扳机/握把/摇杆/五指弯曲，以及手势快捷方法。"""
 
+    BUTTON_PRESS_TIMEOUT = 5.0
+
     def __init__(self, plugin: Any):
         self.plugin = plugin
+        self._press_times: dict[str, float] = {}
 
     @property
     def _config(self) -> dict[str, Any]:
@@ -16,7 +20,13 @@ class VrInputService:
     def set_button(self, side: str, button: str, pressed: bool) -> None:
         key = f"{side}_controller_input"
         cfg = self._config.setdefault(key, {})
-        cfg[button] = bool(pressed)
+        state_key = f"{side}_{button}"
+        if pressed:
+            self._press_times[state_key] = time.monotonic()
+            cfg[button] = True
+        else:
+            self._press_times.pop(state_key, None)
+            cfg[button] = False
 
     def set_trigger(self, side: str, value: float) -> None:
         key = f"{side}_controller_input"
@@ -97,6 +107,29 @@ class VrInputService:
         }
         bends_key = f"{side}_finger_bends"
         self._config[bends_key] = {"thumb": 0.0, "index": 0.0, "middle": 0.0, "ring": 0.0, "pinky": 0.0}
+        for k in list(self._press_times):
+            if k.startswith(f"{side}_"):
+                del self._press_times[k]
+
+    def check_stuck_buttons(self) -> list[str]:
+        """检查并自动释放超时未释放的按键，返回被释放的按键列表。"""
+        now = time.monotonic()
+        stuck = []
+        for state_key, press_time in list(self._press_times.items()):
+            if now - press_time > self.BUTTON_PRESS_TIMEOUT:
+                stuck.append(state_key)
+                parts = state_key.rsplit("_", 1)
+                if len(parts) == 2:
+                    side, button = parts
+                    key = f"{side}_controller_input"
+                    cfg = self._config.get(key, {})
+                    cfg[button] = False
+                    self.plugin.logger.warning(
+                        f"[Input] 按键 {state_key} 按下超时 {now - press_time:.1f}s，已自动释放"
+                    )
+        for sk in stuck:
+            self._press_times.pop(sk, None)
+        return stuck
 
     def get_controller_state(self, side: str) -> dict[str, Any]:
         inp = self._config.get(f"{side}_controller_input", {})

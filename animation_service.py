@@ -6,11 +6,6 @@ from typing import Any
 
 
 class VrAnimationService:
-    """预设动画动作：点头/摇头/歪头/挥手/鞠躬 + 待机循环(呼吸+微晃) + 音频律动响应。
-
-    每个动画在关键帧主动调用 UDP 发送，不再依赖全局 60Hz 流送循环，
-    因此即使流送未启动也能让模型动起来。
-    """
 
     def __init__(self, plugin: Any):
         self.plugin = plugin
@@ -20,6 +15,8 @@ class VrAnimationService:
         self._idle_enabled = False
         self._sway_amount = 0.01
         self._breath_phase = 0.0
+        self._breath_base_y: float = 1.5
+        self._sway_base_x: float = 0.0
 
     @property
     def _config(self) -> dict[str, Any]:
@@ -30,6 +27,14 @@ class VrAnimationService:
 
     def _get_hand(self, side: str) -> dict[str, Any]:
         return self._config.setdefault(f"{side}_controller_pose", {})
+
+    @property
+    def is_animating(self) -> bool:
+        return self._animating
+
+    @property
+    def is_idle_running(self) -> bool:
+        return self._idle_enabled
 
     async def _send_frame(self, reason: str = "animation") -> None:
         """立即发送一帧 UDP 数据，并记录发送结果用于诊断。"""
@@ -98,22 +103,28 @@ class VrAnimationService:
         return {"action": "shake", "count": count}
 
     async def tilt_head(self, direction: str = "left", amount: float = 15.0) -> dict[str, Any]:
-        """通过 HMD rotation_z 实现歪头动画，1.5 秒后恢复。"""
+        """通过 HMD rotation_z 实现歪头动画，1.5 秒后恢复。保留其他旋转轴不变。"""
         await self._ensure_streaming()
         hmd = self._get_hmd()
+        orig_rx = hmd.get("rotation_x", 0.0)
+        orig_ry = hmd.get("rotation_y", 0.0)
+        orig_rz = hmd.get("rotation_z", 0.0)
+        orig_rw = hmd.get("rotation_w", 1.0)
+
         half = math.radians(amount) * (0.5 if direction == "left" else -0.5)
-        hmd["rotation_x"] = 0.0
         hmd["rotation_z"] = math.sin(half)
         hmd["rotation_w"] = math.cos(half)
         await self._send_frame("tilt")
         await asyncio.sleep(1.5)
-        hmd["rotation_z"] = 0.0
-        hmd["rotation_w"] = 1.0
+        hmd["rotation_x"] = orig_rx
+        hmd["rotation_y"] = orig_ry
+        hmd["rotation_z"] = orig_rz
+        hmd["rotation_w"] = orig_rw
         await self._send_frame("tilt_restore")
         return {"action": "tilt", "direction": direction}
 
     async def wave_hand(self, side: str = "right", style: str = "hello") -> dict[str, Any]:
-        """挥手动画：先抬手到肩高，再左右摆动前臂，动作更明显。"""
+        """挥手动画：先抬手到肩高，再左右摆动前臂。"""
         await self._ensure_streaming()
         hand = self._get_hand(side)
         orig_px = hand.get("position_x", -0.26 if side == "left" else 0.27)
@@ -129,8 +140,6 @@ class VrAnimationService:
         n = counts.get(style, 5)
         dur = speed_map.get(style, 0.10)
         s = 1.0 if side == "right" else -1.0
-
-        # 抬手到肩高并略微外翻，让 VRChat 能看到完整手臂
         hand["position_x"] = orig_px + s * 0.25
         hand["position_y"] = max(orig_py, 1.45)
         hand["position_z"] = orig_pz - 0.15
@@ -138,8 +147,6 @@ class VrAnimationService:
         hand["rotation_y"] = s * 0.15
         await self._send_frame("wave_raise")
         await asyncio.sleep(dur)
-
-        # 左右摆动：rotation_z 在 ±35° 之间切换，同时轻微前后移动
         for i in range(n):
             angle = s * math.radians(35 if i % 2 == 0 else -35)
             hand["rotation_z"] = math.sin(angle * 0.5)
@@ -147,8 +154,6 @@ class VrAnimationService:
             hand["position_z"] = orig_pz - 0.15 + (0.04 if i % 2 == 0 else -0.04)
             await self._send_frame("wave")
             await asyncio.sleep(dur)
-
-        # 恢复原始位姿
         hand["position_x"] = orig_px
         hand["position_y"] = orig_py
         hand["position_z"] = orig_pz
@@ -160,12 +165,17 @@ class VrAnimationService:
         return {"action": "wave", "side": side, "style": style}
 
     async def bow(self, depth: float = 30.0) -> dict[str, Any]:
-        """HMD 前倾 + 髋部后移实现鞠躬动画，停留 0.8 秒后恢复。"""
+        """HMD 前倾 + 髋部后移实现鞠躬动画，停留 0.8 秒后恢复。保留非相关旋转轴。"""
         await self._ensure_streaming()
         hmd = self._get_hmd()
         hip = self._config.setdefault("hip_pose", {})
+        orig_rx, orig_ry, orig_rz, orig_rw = (
+            hmd.get("rotation_x", 0.0), hmd.get("rotation_y", 0.0),
+            hmd.get("rotation_z", 0.0), hmd.get("rotation_w", 1.0),
+        )
         orig_hmd_y, orig_hmd_z = hmd.get("position_y", 1.5), hmd.get("position_z", 0.0)
         orig_hip_z = hip.get("position_z", -0.05)
+
         dur = 0.4
         half = math.radians(depth)
         hmd["rotation_x"] = math.sin(-half * 0.5)
@@ -176,8 +186,10 @@ class VrAnimationService:
         await self._send_frame("bow")
         await asyncio.sleep(dur * 2)
         await asyncio.sleep(0.8)
-        hmd["rotation_x"] = 0.0
-        hmd["rotation_w"] = 1.0
+        hmd["rotation_x"] = orig_rx
+        hmd["rotation_y"] = orig_ry
+        hmd["rotation_z"] = orig_rz
+        hmd["rotation_w"] = orig_rw
         hmd["position_y"] = orig_hmd_y
         hmd["position_z"] = orig_hmd_z
         hip["position_z"] = orig_hip_z
@@ -186,21 +198,29 @@ class VrAnimationService:
 
 
     async def _idle_loop(self) -> None:
-        """30Hz 待机循环：正弦呼吸起伏(HMD Y) + 身体微晃(髋部 X + Z 旋转)。"""
+        """30Hz 待机循环：基于基准值的正弦呼吸起伏(HMD Y) + 身体微晃(髋部 X + Z 旋转)。"""
+        hmd_cfg = self._get_hmd()
+        self._breath_base_y = float(hmd_cfg.get("position_y", 1.5))
+        hip_cfg = self._config.get("hip_pose", {})
+        self._sway_base_x = float(hip_cfg.get("position_x", 0.0))
+
         while self._idle_enabled:
             t = asyncio.get_event_loop().time()
             self._breath_phase = (self._breath_phase + 0.02) % (math.pi * 2)
             breath_offset = math.sin(self._breath_phase) * 0.008
+
             hmd = self._get_hmd()
-            hmd["position_y"] = hmd.get("position_y", 1.5) + breath_offset
+            hmd["position_y"] = self._breath_base_y + breath_offset
 
             sway = math.sin(t * 0.7) * self._sway_amount
             hip = self._config.setdefault("hip_pose", {})
-            hip["position_x"] = sway
+            hip["position_x"] = self._sway_base_x + sway
             hip["rotation_z"] = math.sin(sway * 2) * 0.02
+            await self.plugin.udp_service.send()
             await asyncio.sleep(1.0 / 30)
 
     async def start_idle(self) -> dict[str, Any]:
+        await self._ensure_streaming()
         self._idle_enabled = True
         self._breath_phase = 0.0
         if self._idle_task is None or self._idle_task.done():
@@ -219,17 +239,19 @@ class VrAnimationService:
         return {"idle_stopped": True}
 
     async def react_to_audio(self, level: float, freq_band: str = "full") -> dict[str, Any]:
-        """音频律动 → HMD 和双手 Y 轴微动 + HMD 旋转，level 越大动作幅度越大。"""
+        """音频律动 → HMD 和双手 Y 轴微动 + HMD 旋转。基于当前配置值叠加偏移。"""
         l = max(0.0, min(1.0, level))
         hmd = self._get_hmd()
-        hmd["position_y"] = 1.5 + l * 0.03
+        base_y = hmd.get("position_y", 1.5)
+        hmd["position_y"] = base_y + l * 0.03
         if l > 0.4:
             half = math.sin(l * 0.5) * 0.15
             hmd["rotation_y"] = math.sin(half)
             hmd["rotation_w"] = math.cos(half)
         for s in ("left", "right"):
             hand = self._get_hand(s)
-            hand["position_y"] = hand.get("position_y", 1.1) + l * 0.08
+            hand["position_y"] = hand.get("position_y", 1.1 if s == "right" else 0.95) + l * 0.08
+        await self.plugin.udp_service.send()
         return {"audio_level": l, "freq_band": freq_band}
 
     def get_animation_state(self) -> dict[str, Any]:

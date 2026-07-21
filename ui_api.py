@@ -248,6 +248,41 @@ class VrUiApi:
         r = await self.plugin.vrchat_service.handshake(side)
         return Ok(r)
 
+    async def vrc_left_menu(self, pressed: bool = True, **_) -> dict[str, Any]:
+        if pressed:
+            r = self.plugin.vrchat_service.open_menu("left")
+        else:
+            self.plugin.input_service.set_button("left", "menu_click", False)
+            r = {"action": "menu", "side": "left", "pressed": False}
+        return Ok(r)
+
+    async def vrc_right_menu(self, pressed: bool = True, **_) -> dict[str, Any]:
+        if pressed:
+            r = self.plugin.vrchat_service.open_menu("right")
+        else:
+            self.plugin.input_service.set_button("right", "menu_click", False)
+            r = {"action": "menu", "side": "right", "pressed": False}
+        return Ok(r)
+
+    async def vrc_select(self, side: str = "right", pressed: bool = True, **_) -> dict[str, Any]:
+        if pressed:
+            r = self.plugin.vrchat_service.use_action(side)
+        else:
+            self.plugin.input_service.set_button(side, "a_click", False)
+            r = {"action": "use", "side": side, "pressed": False}
+        return Ok(r)
+
+    async def vrc_drag_start(self, side: str = "right", **_) -> dict[str, Any]:
+        self.plugin.input_service.set_button(side, "grip_click", True)
+        self.plugin.input_service.set_button(side, "trigger_click", True)
+        return Ok({"dragging": True, "side": side})
+
+    async def vrc_drag_end(self, **_) -> dict[str, Any]:
+        for s in ("left", "right"):
+            self.plugin.input_service.set_button(s, "grip", False)
+            self.plugin.input_service.set_button(s, "trigger", False)
+        return Ok({"dragging": False})
+
     async def vrc_fbt_calibrate(self, height: str = "medium", **_) -> dict[str, Any]:
         r = self.plugin.vrchat_service.calibrate_fbt(height)
         return Ok(r)
@@ -266,20 +301,17 @@ class VrUiApi:
         return Ok({"monitors": self.plugin.screen_capture.get_monitors()})
 
     async def capture_active_window(self, quality: int = -1, **_) -> dict[str, Any]:
-        """截取当前前台游戏窗口区域，不包含 NEKO 覆盖层。"""
         r = self.plugin.screen_capture.capture_active_window(quality=quality)
         return Ok(r)
 
     async def capture_game_region(self, left: int = 0, top: int = 0,
                                   width: int = 1920, height: int = 1080,
                                   quality: int = -1, **_) -> dict[str, Any]:
-        """截取屏幕指定坐标区域。"""
         r = self.plugin.screen_capture.capture_game_region(
             left=left, top=top, width=width, height=height, quality=quality)
         return Ok(r)
 
     async def get_active_window_info(self, **_) -> dict[str, Any]:
-        """获取当前前台窗口的位置和标题。"""
         rect = self.plugin.screen_capture.get_active_window_rect()
         title = self.plugin.screen_capture.get_active_window_title_raw()
         return Ok({

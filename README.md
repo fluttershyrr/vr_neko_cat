@@ -1,12 +1,3 @@
-注意注意注意，本插件未开发完成，仅供参考。注意注意注意，本插件未开发完成，仅供参考。注意注意注意，本插件未开发完成，仅供参考。
-注意注意注意，本插件未开发完成，仅供参考。注意注意注意，本插件未开发完成，仅供参考。注意注意注意，本插件未开发完成，仅供参考。
-
-
-
-
-
-
-
 # VR N.E.K.O.cat
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
@@ -21,60 +12,65 @@
 
 | 功能 | 描述 |
 |------|------|
-| **全身追踪 (FBT)** | 6 设备位姿模拟 (HMD / 左右手柄 / 髋部 / 左右脚)，60Hz 实时流送 |
-| **手势控制** | 8 种 VRChat 标准手势 + 五指独立弯曲 + 摇杆/按键/扳机输入 |
-| **情感映射** | 12 种情感 (开心/悲伤/愤怒/恐惧/惊讶/厌恶等) → 全身姿态自动映射 |
-| **舞蹈系统** | VMD 文件解析播放，骨骼重定向到 6 设备，支持循环/变速/换模型 |
+| **全身追踪 (FBT)** | 6 设备位姿模拟 (HMD / 左右手柄 / 髋部 / 左右脚)，60Hz 实时 UDP 流送 |
+| **手势控制** | 8 种 VRChat 标准手势 + 五指独立弯曲 + 摇杆/按键/扳机输入，含 5 秒卡键自动释放 |
+| **情感映射** | 12 种情感 (开心/悲伤/愤怒/恐惧/惊讶/害羞等) → 全身姿态自动映射 |
+| **舞蹈系统** | VMD 文件解析播放，骨骼重定向到 6 设备，支持循环/变速 |
 | **视觉桥接** | AI 视觉 → VR 行为：人脸检测→注视、表情→情感、手势→手指、物体→关注 |
-| **动画动作** | 点头/摇头/歪头/挥手/鞠躬/待机动画/音频律动响应 |
+| **动画动作** | 点头/摇头/歪头/挥手/鞠躬 + 待机呼吸微动 + 音频律动响应 |
 | **AI 注视追踪** | 平滑注视目标或方向，自动转头追踪 |
 | **VRChat 操控** | 移动/转向/跳跃/坐下/蹲下/拾取/投掷/握手/FBT 校准 |
 | **驱动管理** | AnyaDance 进程生命周期管理 + SteamVR 驱动注册/注销/重启 |
-| **游戏画面感知** | 截图前台游戏窗口 (mss，无 NEKO 覆盖层)，供 AI 分析游戏场景 |
-| **Web 控制面板** | 内置可视化仪表板，实时查看所有设备状态 |
-| **AI 可直接调用** | 22 个 LLM Tool 让 AI 自主控制所有 VR 行为 |
+| **游戏画面感知** | 截图前台游戏窗口 (mss/PIL 双后端)，供 AI 分析游戏场景 |
+| **玻璃控制面板** | 苹果液态玻璃风格 UI，内置氛围粒子引擎 (飘雪/樱花/细雨/星尘) |
+| **AI 可直接调用** | 22 个 LLM Tool 让 AI 自主控制所有 VR 行为，50+ plugin_entry 入口 |
+| **连接稳定** | UDP 连接健康监测 + 断连自动重建 Socket |
 
 ---
 
 ## 架构概览
 
 ```
-┌──────────────────────────────────────────────────────┐
-│  N.E.K.O AI 核心                                       │
-│  (plugin_entry / llm_tool 调用)                       │
-└──────────────────────┬───────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  N.E.K.O AI 核心 (plugin_entry / llm_tool 调用)          │
+└──────────────────────┬──────────────────────────────────┘
                        │
                        ▼
-┌──────────────────────────────────────────────────────┐
-│  VRControllerPlugin  (vr_neko_cat 插件)                │
-│                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────┐       │
-│  │ pose     │  │ emotion  │  │ dance        │       │
-│  │ service  │  │ service  │  │ service      │       │
-│  ├──────────┤  ├──────────┤  ├──────────────┤       │
-│  │ input    │  │ tracking │  │ animation    │       │
-│  │ service  │  │ service  │  │ service      │       │
-│  ├──────────┤  ├──────────┤  ├──────────────┤       │
-│  │ vrchat   │  │ vision   │  │ dashboard    │       │
-│  │ service  │  │ bridge   │  │ service      │       │
-│  └──────────┘  └──────────┘  └──────────────┘       │
-│                                                      │
-│  VrUdpService → build_packet() → JSON (AnyaDance 协议)│
-│                  │ socket.sendto()                   │
-│                  ▼                                   │
-│            127.0.0.1:39570 (UDP)                     │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│  AnyaDance.exe  →  driver_anyadance.dll               │
-│  (C++ SteamVR 虚拟设备驱动)                            │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│  SteamVR  →  VRChat  (全身追踪 / 手势 / 移动)          │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  VrNekoCatPlugin (Mixin 组合模式)                         │
+│                                                         │
+│  ┌─────────┐  ┌──────────┐  ┌───────────┐  ┌─────────┐ │
+│  │ entries  │  │ llm_tools│  │ ui_api    │  │ dashboard│ │
+│  │ (50+ 入口)│  │ (22 工具) │  │ (参数校验) │  │ (聚合状态)│ │
+│  └────┬────┘  └────┬─────┘  └─────┬─────┘  └────┬────┘ │
+│       │             │              │              │      │
+│       └──────┬──────┘              │              │      │
+│              ▼                     ▼              │      │
+│  ┌───────────────────────────────────────────┐    │      │
+│  │  服务层 (7 services + 桥接/适配)             │    │      │
+│  │  pose / input / emotion / tracking /      │    │      │
+│  │  animation / dance / vrchat / vision      │    │      │
+│  └─────────────────┬─────────────────────────┘    │      │
+│                    │                              │      │
+│                    ▼                              │      │
+│  ┌────────────────────────────────────────┐       │      │
+│  │  udp_service → build_packet() → JSON   │       │      │
+│  │              → socket.sendto()         │       │      │
+│  │            127.0.0.1:39570 (UDP)       │       │      │
+│  └─────────────────┬──────────────────────┘       │      │
+│                    │                              │      │
+│  ┌─────────────────┴──────────────────────┐       │      │
+│  │  driver_service / config_service       │       │      │
+│  │  (进程管理 + 注册表 + 配置持久化)        │       │      │
+│  └────────────────────────────────────────┘       │      │
+└────────────────────────┬──────────────────────────┘      │
+                         │                                 │
+                         ▼                                 ▼
+┌────────────────────────┐              ┌──────────────────┐
+│ AnyaDance.exe          │              │ Web 控制面板      │
+│ → SteamVR 驱动         │              │ (index.html)     │
+│ → VRChat (FBT/手势/移动)│              │ 玻璃UI + 粒子特效 │
+└────────────────────────┘              └──────────────────┘
 ```
 
 ---
@@ -83,51 +79,46 @@
 
 ### 前置要求
 
-- Windows 10/11
-- Python 3.11
+- Windows 10/11, Python 3.11
 - [N.E.K.O.](https://github.com/Project-N-E-K-O/N.E.K.O) 已安装并运行
-- SteamVR 已安装
-- VRChat (可选，用于实际控制)
+- SteamVR + VRChat (可选)
 
 ### 安装
 
-插件位于 `N.E.K.O/plugin/plugins/vr_neko_cat/`，N.E.K.O. 启动时会自动发现。
+插件位于 `N.E.K.O/plugin/plugins/vr_neko_cat/`，N.E.K.O. 启动时自动发现。
 
 ### 使用
 
 1. 启动 N.E.K.O.
-2. 在插件管理面板启用 `VR N.E.K.O.cat`
-3. 打开 Web 控制面板 (`static/index.html`)
-4. 通过控制面板或 AI 对话控制 VRChat 行为
+2. 在插件管理面板启用 **VR N.E.K.O.cat**
+3. 打开 Web 控制面板查看实时状态
+4. 通过 AI 对话或控制面板控制 VRChat 行为
 
 ### 一键驱动启动
 
-插件内置 AnyaDance v0.0.3 发布版，可通过 `driver_oneclick` 一键完成：启动 AnyaDance → 注册驱动 → 启动流送。
+插件内置 AnyaDance 发布版，`driver_oneclick` 一键完成：启动 AnyaDance → 注册驱动 → 启动流送。
 
 ---
 
-## UPD 协议
+## UDP 协议
 
-插件向 `127.0.0.1:39570` 发送 UDP JSON 数据包，格式遵循 AnyaDance 协议：
+插件向 `127.0.0.1:39570` 发送 UDP JSON，格式遵循 AnyaDance 协议:
 
 ```json
 {
   "version": 1,
   "devices": {
-    "hmd":               {"pos": [x,y,z], "rot": [x,y,z,w]},
-    "left_controller":   {"pos": [x,y,z], "rot": [x,y,z,w]},
-    "right_controller":  {"pos": [x,y,z], "rot": [x,y,z,w]},
-    "hip":               {"pos": [x,y,z], "rot": [x,y,z,w]},
-    "left_foot":         {"pos": [x,y,z], "rot": [x,y,z,w]},
-    "right_foot":        {"pos": [x,y,z], "rot": [x,y,z,w]}
+    "hmd":              {"valid": true, "connected": true, "pose": {"position": [x,y,z], "rotation_xyzw": [x,y,z,w]}},
+    "left_controller":  {...},
+    "right_controller": {...},
+    "hip":              {...},
+    "left_foot":        {...},
+    "right_foot":       {...}
   },
   "inputs": {
-    "left_controller":  { "trigger_click": false, "joystick_x": 0.0, ... },
-    "right_controller": { "trigger_click": false, "joystick_x": 0.0, ... },
-    "finger_bends": {
-      "left":  { "thumb": 0.0, "index": 0.0, ... },
-      "right": { "thumb": 0.0, "index": 0.0, ... }
-    }
+    "left_controller":  {"trigger_click": false, "joystick_x": 0.0, ...},
+    "right_controller": {...},
+    "finger_bends":     {"left": {...}, "right": {...}}
   }
 }
 ```
@@ -138,30 +129,34 @@
 
 | 工具名 | 功能 |
 |--------|------|
-| `vr_emotion` | 设置情感姿态 |
-| `vr_gesture` / `vr_gesture_both` | VRChat 手势 |
-| `vr_walk` / `vr_stop_walk` | 移动控制 |
-| `vr_turn` | 转向 |
-| `vr_look_at` | 注视目标 |
-| `vr_animation` | 播放动画动作 |
-| `vr_pickup` / `vr_drop` | 拾取/投掷 |
+| `vr_emotion` | 设置 12 种情感姿态 (0~1 强度) |
+| `vr_gesture` / `vr_gesture_both` | 单手/双手 VRChat 手势 |
+| `vr_walk` / `vr_stop_walk` / `vr_turn` | 移动控制 (方向 + 秒数) |
+| `vr_look_at` / `vr_animation` | 注视目标 / 播放预设动画 |
+| `vr_pickup` / `vr_drop` | 拾取/投掷物品 |
 | `vr_jump` / `vr_sit` / `vr_crouch` | 跳跃/坐下/蹲下 |
-| `vr_handshake` | 握手 |
-| `vr_dance` / `vr_stop_dance` | 舞蹈控制 |
-| `vr_get_state` | 获取当前状态 |
-| `vr_start_idle` / `vr_stop_idle` | 待机动画 |
-| `vr_driver_status` / `vr_driver_oneclick` | 驱动状态/一键启动 |
-| `vr_capture_screen` / `vr_capture_game_window` | 截图 |
-| `vr_get_window_info` | 获取窗口信息 |
+| `vr_handshake` | 伸手握手交互 |
+| `vr_dance` / `vr_stop_dance` | 播放/停止 VMD 舞蹈 |
+| `vr_get_state` | 获取全状态摘要 |
+| `vr_start_idle` / `vr_stop_idle` | 启动/停止待机呼吸动画 |
+| `vr_driver_status` / `vr_driver_oneclick` | 驱动状态查询 / 一键启动 |
+| `vr_capture_screen` / `vr_capture_game_window` | 全屏/游戏窗口截图 |
+| `vr_get_window_info` | 获取前台窗口信息 |
+
+---
+
+## 文件结构
+
+详见 [FILES.md](./FILES.md) — 逐文件说明每个模块的职责。
 
 ---
 
 ## 依赖
 
 - [N.E.K.O. Plugin SDK](https://github.com/Project-N-E-K-O/N.E.K.O) (>=0.1.0)
-- [mss](https://github.com/BoboTiG/python-mss) — 高速屏幕截图
-- [Pillow](https://python-pillow.org/) — 图像处理
-- [numpy](https://numpy.org/) — 数值计算
+- [mss](https://github.com/BoboTiG/python-mss) — 高速屏幕截图 (可选)
+- [Pillow](https://python-pillow.org/) — 图像处理后备 (可选)
+- [numpy](https://numpy.org/) — 数值计算 (可选)
 
 ---
 
@@ -169,11 +164,9 @@
 
 Apache 2.0 — 详见 [LICENSE](https://github.com/Project-N-E-K-O/N.E.K.O/blob/main/LICENSE)
 
-本插件作为 N.E.K.O. 生态的一部分，遵循上游项目许可证。
-
 ---
 
 ## 相关项目
 
-- [N.E.K.O.](https://github.com/Project-N-E-K-O/N.E.K.O) — AI 伴侣平台主项目
+- [N.E.K.O.](https://github.com/Project-N-E-K-O/N.E.K.O) — AI 伴侣平台
 - [AnyaDance](https://github.com/anyapipira/AnyaDance) — SteamVR 虚拟全身追踪驱动

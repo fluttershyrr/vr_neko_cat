@@ -91,6 +91,16 @@ class VrDashboardService:
                 "send_controller_poses": cfg.get("send_controller_poses", True),
                 "send_tracker_poses": cfg.get("send_tracker_poses", True),
             },
+            "keybinds": {
+                "enabled": cfg.get("keybinds_enabled", True),
+                "left_menu": cfg.get("keybind_left_menu", ""),
+                "right_menu": cfg.get("keybind_right_menu", ""),
+                "select_left": cfg.get("keybind_select_left", ""),
+                "select_right": cfg.get("keybind_select_right", ""),
+                "drag_left": cfg.get("keybind_drag_left", ""),
+                "drag_right": cfg.get("keybind_drag_right", ""),
+                "drag_end": cfg.get("keybind_drag_end", ""),
+            },
             "dance_config": {
                 "height": cfg.get("dance_height", 1.5),
                 "speed": cfg.get("dance_speed", 1.0),
@@ -102,6 +112,10 @@ class VrDashboardService:
         }
 
     async def build_dashboard_context(self) -> dict[str, Any]:
+        return await self.build_dashboard_state()
+
+    async def get_dashboard_state(self) -> dict[str, Any]:
+        """兼容入口：返回完整的仪表板状态（含驱动状态）。"""
         return await self.build_dashboard_state()
 
     async def save_settings(self, **kwargs: Any) -> dict[str, Any]:
@@ -117,6 +131,10 @@ class VrDashboardService:
             "dance_height", "dance_speed", "dance_fps", "dance_hand_reach",
             "dance_loop", "dance_vmd_path",
             "anyadance_path",
+            "keybinds_enabled",
+            "keybind_left_menu", "keybind_right_menu",
+            "keybind_select_left", "keybind_select_right",
+            "keybind_drag_left", "keybind_drag_right", "keybind_drag_end",
         ]
         for k in simple_keys:
             if k in kwargs and kwargs[k] is not None:

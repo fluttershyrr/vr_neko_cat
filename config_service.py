@@ -48,8 +48,10 @@ class VrConfigService:
         "anyadance_path": "",
     }
 
-    def __init__(self, data_dir: str):
-        self._file = Path(data_dir) / "config.json"
+    def __init__(self, plugin=None, data_dir: str = None):
+        if data_dir is None and plugin is not None:
+            data_dir = str(Path(__file__).parent)
+        self._file = Path(data_dir or ".") / "config.json"
         self._config: dict[str, Any] = {}
 
     def _deep_merge(self, base: dict, override: dict) -> dict:
@@ -73,8 +75,11 @@ class VrConfigService:
                 if isinstance(saved, dict):
                     self._config = self._deep_merge(self.DEFAULTS, saved)
                     return self._config
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"[VrConfig] 配置加载失败: {e}")
         except Exception:
-            pass
+            import traceback
+            traceback.print_exc()
         self._config = copy.deepcopy(self.DEFAULTS)
         return self._config
 

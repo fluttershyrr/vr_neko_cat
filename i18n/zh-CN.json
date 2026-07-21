@@ -117,6 +117,16 @@
   "entries.vrc_handshake.description": "VRChat 握手动作 (伸右手+手掌朝前)",
   "entries.vrc_fbt_calibrate.name": "VRChat FBT 校准",
   "entries.vrc_fbt_calibrate.description": "VRChat 全身追踪 FBT 校准 (short/medium/tall/tower)",
+  "entries.vrc_left_menu.name": "VRChat 左手菜单",
+  "entries.vrc_left_menu.description": "打开 VRChat 左手快速菜单",
+  "entries.vrc_right_menu.name": "VRChat 右手菜单",
+  "entries.vrc_right_menu.description": "打开 VRChat 右手快速菜单",
+  "entries.vrc_select.name": "VRChat 菜单确认",
+  "entries.vrc_select.description": "VRChat 菜单选择/确认（Z/A/X 键短按）",
+  "entries.vrc_drag_start.name": "VRChat 开始拖拽",
+  "entries.vrc_drag_start.description": "按住 grip+trigger 开始抓取并拖拽物体",
+  "entries.vrc_drag_end.name": "VRChat 结束拖拽",
+  "entries.vrc_drag_end.description": "释放 grip+trigger 结束拖拽",
   "entries.vrc_gestures_info.name": "VRChat 手势列表",
   "entries.vrc_gestures_info.description": "获取 VRChat 全部可用标准手势信息"
 }

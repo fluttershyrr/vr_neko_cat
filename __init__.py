@@ -19,12 +19,42 @@ from .vision_bridge import VrVisionBridge
 from .vrchat_service import VrChatService
 from .dashboard_service import VrDashboardService
 from .driver_service import VrDriverService
-from .screen_capture_service import VrScreenCapture
 from .ui_api import VrUiApi
+
+try:
+    from .screen_capture_service import VrScreenCapture
+except ImportError:
+    VrScreenCapture = None
+
+
+# ---------------------------------------------------------------------------
+# 当 PIL 不可用时，提供空壳截图服务，防止插件加载崩溃
+# ---------------------------------------------------------------------------
+class _DummyScreenCapture:
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def capture(self, **kwargs):
+        return {"ok": False, "error": "PIL 未安装，截图功能不可用"}
+
+    def capture_active_window(self, **kwargs):
+        return {"ok": False, "error": "PIL 未安装，截图功能不可用"}
+
+    def get_monitors(self):
+        return []
+
+    def set_config(self, **kwargs):
+        return {"ok": False, "error": "PIL 未安装"}
+
+    def get_active_window_rect(self):
+        return {"left": 0, "top": 0, "right": 0, "bottom": 0}
+
+    def get_active_window_title_raw(self):
+        return ""
 
 
 @neko_plugin
-class VRControllerPlugin(NekoPluginBase):
+class VrNekoCatPlugin(NekoPluginBase):
     """VR N.E.K.O.cat — UDP → AnyaDance → SteamVR → VRChat 全功能插件"""
 
     STREAM_RATE_HZ = 60
@@ -47,7 +77,7 @@ class VRControllerPlugin(NekoPluginBase):
         self.vrchat_service = VrChatService(self)
         self.dashboard_service = VrDashboardService(self)
         self.driver_service = VrDriverService(self)
-        self.screen_capture = VrScreenCapture(self)
+        self.screen_capture = VrScreenCapture(self) if VrScreenCapture is not None else _DummyScreenCapture(self)
         self.ui_api = VrUiApi(self)
 
         self._streaming = False
@@ -145,13 +175,25 @@ class VRControllerPlugin(NekoPluginBase):
     # ──────────────────── 手指/摇杆/按键/手势 ────────────────────
 
     @plugin_entry(id="set_finger_bends", name=tr("entries.set_finger_bends.name", default="设置手指弯曲"), description=tr("entries.set_finger_bends.description", default="设置手指弯曲值，驱动 VRChat Index 骨骼手势 (0=伸直, 1=弯曲)"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"]}, "thumb": {"type": "number"}, "index": {"type": "number"}, "middle": {"type": "number"}, "ring": {"type": "number"}, "pinky": {"type": "number"}}, "required": ["side"]})
-    async def set_finger_bends(self, side: str = "left", **kwargs): return await self.ui_api.set_finger_bends(side=side, **kwargs)
+    async def set_finger_bends(self, side: str = "left", **kwargs):
+        await self._ensure_streaming("set_finger_bends")
+        r = await self.ui_api.set_finger_bends(side=side, **kwargs)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="set_joystick", name=tr("entries.set_joystick.name", default="设置摇杆"), description=tr("entries.set_joystick.description", default="VRChat 移动摇杆 X/Y 值"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"]}, "x": {"type": "number"}, "y": {"type": "number"}}, "required": ["side"]})
-    async def set_joystick(self, side: str = "left", x: float = 0.0, y: float = 0.0, **_): return await self.ui_api.set_joystick(side=side, x=x, y=y)
+    async def set_joystick(self, side: str = "left", x: float = 0.0, y: float = 0.0, **_):
+        await self._ensure_streaming("set_joystick")
+        r = await self.ui_api.set_joystick(side=side, x=x, y=y)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="press_button", name=tr("entries.press_button.name", default="按键"), description=tr("entries.press_button.description", default="VRChat 控制器按键 (trigger/menu/grip/a/b)"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"]}, "button": {"type": "string", "enum": ["trigger_click", "menu_click", "system_click", "a_click", "b_click", "grip_click"]}, "pressed": {"type": "boolean", "default": True}}, "required": ["side", "button"]})
-    async def press_button(self, side: str = "left", button: str = "", pressed: bool = True, **_): return await self.ui_api.press_button(side=side, button=button, pressed=pressed)
+    async def press_button(self, side: str = "left", button: str = "", pressed: bool = True, **_):
+        await self._ensure_streaming("press_button")
+        r = await self.ui_api.press_button(side=side, button=button, pressed=pressed)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="hand_gesture", name=tr("entries.hand_gesture.name", default="手部手势"), description=tr("entries.hand_gesture.description", default="VRChat Index 标准手势"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"]}, "gesture": {"type": "string", "enum": ["open", "fist", "point", "peace", "thumbs_up", "rock", "gun"]}}, "required": ["side", "gesture"]})
     async def hand_gesture(self, side: str = "left", gesture: str = "open", **_):
@@ -165,6 +207,7 @@ class VRControllerPlugin(NekoPluginBase):
 
     @plugin_entry(id="play_dance", name=tr("entries.play_dance.name", default="播放舞蹈"), description=tr("entries.play_dance.description", default="加载 VMD 并驱动 VRChat 模型跳舞"), input_schema={"type": "object", "properties": {"vmd_path": {"type": "string"}}})
     async def play_dance(self, vmd_path: str = "", **_):
+        await self._ensure_streaming("play_dance")
         r = await self.ui_api.play_dance(vmd_path=vmd_path)
         self._notify_ai(f"开始播放舞蹈: {vmd_path}", priority=7)
         return r
@@ -178,10 +221,18 @@ class VRControllerPlugin(NekoPluginBase):
     # ──────────────────── 镜像 ────────────────────
 
     @plugin_entry(id="mirror_hands", name=tr("entries.mirror_hands.name", default="镜像手部"), description=tr("entries.mirror_hands.description", default="左手→右手 VRChat 位姿镜像"))
-    async def mirror_hands_entry(self, enabled: bool = True, **_): return await self.ui_api.mirror_hands(enabled=enabled)
+    async def mirror_hands_entry(self, enabled: bool = True, **_):
+        await self._ensure_streaming("mirror_hands")
+        r = await self.ui_api.mirror_hands(enabled=enabled)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="mirror_feet", name=tr("entries.mirror_feet.name", default="镜像脚部"), description=tr("entries.mirror_feet.description", default="左脚→右脚 VRChat 位姿镜像"))
-    async def mirror_feet_entry(self, enabled: bool = True, **_): return await self.ui_api.mirror_feet(enabled=enabled)
+    async def mirror_feet_entry(self, enabled: bool = True, **_):
+        await self._ensure_streaming("mirror_feet")
+        r = await self.ui_api.mirror_feet(enabled=enabled)
+        await self.udp_service.send()
+        return r
 
     # ──────────────────── 情感 ────────────────────
 
@@ -196,7 +247,9 @@ class VRControllerPlugin(NekoPluginBase):
 
     @plugin_entry(id="blend_emotions", name=tr("entries.blend_emotions.name", default="混合情感"), description=tr("entries.blend_emotions.description", default="VRChat 双情感混合"), input_schema={"type": "object", "properties": {"emotion_a": {"type": "string"}, "emotion_b": {"type": "string"}, "ratio": {"type": "number", "default": 0.5, "minimum": 0.0, "maximum": 1.0}}})
     async def blend_emotions(self, emotion_a: str = "neutral", emotion_b: str = "happy", ratio: float = 0.5, **_):
+        await self._ensure_streaming("blend_emotions")
         r = await self.ui_api.blend_emotions(emotion_a, emotion_b, ratio)
+        await self.udp_service.send()
         self._notify_ai(f"情感混合 {emotion_a}{ratio:.0%}+{emotion_b}{1-ratio:.0%}")
         return r
 
@@ -206,17 +259,27 @@ class VRControllerPlugin(NekoPluginBase):
     # ──────────────────── 追踪 ────────────────────
 
     @plugin_entry(id="look_at", name=tr("entries.look_at.name", default="注视目标"), description=tr("entries.look_at.description", default="VRChat HMD 平滑注视世界坐标"), input_schema={"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number", "default": 1.5}, "z": {"type": "number"}, "smooth": {"type": "number", "default": -1}}})
-    async def look_at(self, x: float = 0.0, y: float = 1.5, z: float = -3.0, smooth: float = -1.0, **_): return await self.ui_api.look_at(x, y, z, smooth)
+    async def look_at(self, x: float = 0.0, y: float = 1.5, z: float = -3.0, smooth: float = -1.0, **_):
+        await self._ensure_streaming("look_at")
+        r = await self.ui_api.look_at(x, y, z, smooth)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="look_at_direction", name=tr("entries.look_at_direction.name", default="朝向角度"), description=tr("entries.look_at_direction.description", default="HMD Yaw/Pitch 角度"), input_schema={"type": "object", "properties": {"yaw": {"type": "number"}, "pitch": {"type": "number", "default": 0.0}, "smooth": {"type": "number", "default": -1}}})
-    async def look_at_direction(self, yaw: float = 0.0, pitch: float = 0.0, smooth: float = -1.0, **_): return await self.ui_api.look_at_direction(yaw, pitch, smooth)
+    async def look_at_direction(self, yaw: float = 0.0, pitch: float = 0.0, smooth: float = -1.0, **_):
+        await self._ensure_streaming("look_at_direction")
+        r = await self.ui_api.look_at_direction(yaw, pitch, smooth)
+        await self.udp_service.send()
+        return r
 
     @ui.action(id="reset_head", label=tr("actions.reset_head", default="重置头部"), refresh_context=True)
     @plugin_entry(id="reset_head", name=tr("entries.reset_head.name", default="重置头部朝向"), description=tr("entries.reset_head.description", default="VRChat HMD 旋转归零"))
     async def reset_head(self, **_): return await self.ui_api.reset_head()
 
     @plugin_entry(id="start_tracking", name=tr("entries.start_tracking.name", default="开始追踪"), description=tr("entries.start_tracking.description", default="60Hz 持续追踪 VRChat 目标"), input_schema={"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number", "default": 1.5}, "z": {"type": "number"}}})
-    async def start_tracking(self, x: float = 0.0, y: float = 1.5, z: float = -3.0, **_): return await self.ui_api.start_tracking(x, y, z)
+    async def start_tracking(self, x: float = 0.0, y: float = 1.5, z: float = -3.0, **_):
+        await self._ensure_streaming("start_tracking")
+        return await self.ui_api.start_tracking(x, y, z)
 
     @plugin_entry(id="stop_tracking", name=tr("entries.stop_tracking.name", default="停止追踪"), description=tr("entries.stop_tracking.description", default="停止持续追踪"))
     async def stop_tracking(self, **_): return await self.ui_api.stop_tracking()
@@ -228,14 +291,26 @@ class VRControllerPlugin(NekoPluginBase):
 
     @ui.action(id="nod_head", label=tr("actions.nod_head", default="点头"), refresh_context=True)
     @plugin_entry(id="nod_head", name=tr("entries.nod_head.name", default="点头"), description=tr("entries.nod_head.description", default="VRChat 模型点头"), input_schema={"type": "object", "properties": {"count": {"type": "integer", "default": 1}, "speed": {"type": "number", "default": 1.0}}})
-    async def nod_head(self, count: int = 1, speed: float = 1.0, **_): return await self.ui_api.do_nod_head(count, speed)
+    async def nod_head(self, count: int = 1, speed: float = 1.0, **_):
+        await self._ensure_streaming("nod_head")
+        r = await self.ui_api.do_nod_head(count, speed)
+        await self.udp_service.send()
+        return r
 
     @ui.action(id="shake_head", label=tr("actions.shake_head", default="摇头"), refresh_context=True)
     @plugin_entry(id="shake_head", name=tr("entries.shake_head.name", default="摇头"), description=tr("entries.shake_head.description", default="VRChat 模型摇头"), input_schema={"type": "object", "properties": {"count": {"type": "integer", "default": 1}, "speed": {"type": "number", "default": 1.0}}})
-    async def shake_head(self, count: int = 1, speed: float = 1.0, **_): return await self.ui_api.do_shake_head(count, speed)
+    async def shake_head(self, count: int = 1, speed: float = 1.0, **_):
+        await self._ensure_streaming("shake_head")
+        r = await self.ui_api.do_shake_head(count, speed)
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="tilt_head", name=tr("entries.tilt_head.name", default="歪头"), description=tr("entries.tilt_head.description", default="VRChat 模型歪头"))
-    async def tilt_head(self, direction: str = "left", amount: float = 15.0, **_): return await self.ui_api.do_tilt_head(direction, amount)
+    async def tilt_head(self, direction: str = "left", amount: float = 15.0, **_):
+        await self._ensure_streaming("tilt_head")
+        r = await self.ui_api.do_tilt_head(direction, amount)
+        await self.udp_service.send()
+        return r
 
     @ui.action(id="wave_hand", label=tr("actions.wave_hand", default="挥手"), refresh_context=True)
     @plugin_entry(id="wave_hand", name=tr("entries.wave_hand.name", default="挥手"), description=tr("entries.wave_hand.description", default="VRChat 模型挥手"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}, "style": {"type": "string", "enum": ["hello", "bye", "excited"], "default": "hello"}}})
@@ -247,19 +322,27 @@ class VRControllerPlugin(NekoPluginBase):
 
     @plugin_entry(id="bow", name=tr("entries.bow.name", default="鞠躬"), description=tr("entries.bow.description", default="VRChat 模型鞠躬"))
     async def bow(self, depth: float = 30.0, **_):
+        await self._ensure_streaming("bow")
         r = await self.ui_api.do_bow(depth)
+        await self.udp_service.send()
         self._notify_ai("正在鞠躬")
         return r
 
     @ui.action(id="start_idle", label=tr("actions.start_idle", default="待机动画"), refresh_context=True)
     @plugin_entry(id="start_idle", name=tr("entries.start_idle.name", default="开启待机动画"), description=tr("entries.start_idle.description", default="VRChat 呼吸+微晃待机"))
-    async def start_idle(self, **_): return await self.ui_api.start_idle()
+    async def start_idle(self, **_):
+        await self._ensure_streaming("start_idle")
+        return await self.ui_api.start_idle()
 
     @plugin_entry(id="stop_idle", name=tr("entries.stop_idle.name", default="停止待机动画"), description=tr("entries.stop_idle.description", default="停止 VRChat 待机动画"))
     async def stop_idle(self, **_): return await self.ui_api.stop_idle()
 
     @plugin_entry(id="react_to_audio", name=tr("entries.react_to_audio.name", default="音频同步"), description=tr("entries.react_to_audio.description", default="VRChat 音频律动同步"), input_schema={"type": "object", "properties": {"level": {"type": "number", "minimum": 0.0, "maximum": 1.0}, "freq_band": {"type": "string", "default": "full"}}})
-    async def react_to_audio(self, level: float = 0.0, freq_band: str = "full", **_): return await self.ui_api.react_to_audio(level, freq_band)
+    async def react_to_audio(self, level: float = 0.0, freq_band: str = "full", **_):
+        await self._ensure_streaming("react_to_audio")
+        r = await self.ui_api.react_to_audio(level, freq_band)
+        await self.udp_service.send()
+        return r
 
     # ──────────────────── AI 视觉 ────────────────────
 
@@ -319,19 +402,25 @@ class VRControllerPlugin(NekoPluginBase):
 
     @plugin_entry(id="vrc_walk", name=tr("entries.vrc_walk.name", default="VRChat 移动"), description=tr("entries.vrc_walk.description", default="VRChat 摇杆移动"), input_schema={"type": "object", "properties": {"direction": {"type": "string", "enum": ["forward", "backward", "left", "right"], "default": "forward"}}})
     async def vrc_walk(self, direction: str = "forward", **_):
+        await self._ensure_streaming("vrc_walk")
         r = await self.ui_api.vrc_walk(direction)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat 向{direction}移动", respond=False)
         return r
 
     @plugin_entry(id="vrc_walk_for", name=tr("entries.vrc_walk_for.name", default="VRChat 定时移动"), description=tr("entries.vrc_walk_for.description", default="VRChat 移动指定时长后停止"), input_schema={"type": "object", "properties": {"direction": {"type": "string", "enum": ["forward", "backward", "left", "right"], "default": "forward"}, "duration": {"type": "number", "default": 2.0}}})
     async def vrc_walk_for(self, direction: str = "forward", duration: float = 2.0, **_):
+        await self._ensure_streaming("vrc_walk_for")
         r = await self.ui_api.vrc_walk_for(direction, duration)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat 向{direction}移动 {duration}秒", respond=False)
         return r
 
     @plugin_entry(id="vrc_turn", name=tr("entries.vrc_turn.name", default="VRChat 转向"), description=tr("entries.vrc_turn.description", default="VRChat 平滑转向"), input_schema={"type": "object", "properties": {"direction": {"type": "string", "enum": ["left", "right"], "default": "right"}, "speed": {"type": "number", "default": 0.5}}})
     async def vrc_turn(self, direction: str = "right", speed: float = 0.5, **_):
+        await self._ensure_streaming("vrc_turn")
         r = await self.ui_api.vrc_turn(direction, speed)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat 向{direction}转向", respond=False)
         return r
 
@@ -340,42 +429,98 @@ class VRControllerPlugin(NekoPluginBase):
 
     @plugin_entry(id="vrc_pickup", name=tr("entries.vrc_pickup.name", default="VRChat 拾取"), description=tr("entries.vrc_pickup.description", default="VRChat 抓取物体"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}})
     async def vrc_pickup(self, side: str = "right", **_):
+        await self._ensure_streaming("vrc_pickup")
         r = await self.ui_api.vrc_pickup(side)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat {'右手' if side == 'right' else '左手'}拾取物体", priority=6)
         return r
 
     @plugin_entry(id="vrc_drop", name=tr("entries.vrc_drop.name", default="VRChat 放下"), description=tr("entries.vrc_drop.description", default="VRChat 放下物体"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}})
     async def vrc_drop(self, side: str = "right", **_):
+        await self._ensure_streaming("vrc_drop")
         r = await self.ui_api.vrc_drop(side)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat {'右手' if side == 'right' else '左手'}放下物体")
         return r
 
     @plugin_entry(id="vrc_jump", name=tr("entries.vrc_jump.name", default="VRChat 跳跃"), description=tr("entries.vrc_jump.description", default="VRChat 跳跃"))
     async def vrc_jump(self, **_):
+        await self._ensure_streaming("vrc_jump")
         r = await self.ui_api.vrc_jump()
+        await self.udp_service.send()
         self._notify_ai("VRChat 跳跃")
         return r
 
     @plugin_entry(id="vrc_sit", name=tr("entries.vrc_sit.name", default="VRChat 坐下"), description=tr("entries.vrc_sit.description", default="VRChat 坐姿预设"))
     async def vrc_sit(self, **_):
+        await self._ensure_streaming("vrc_sit")
         r = await self.ui_api.vrc_sit()
+        await self.udp_service.send()
         self._notify_ai("VRChat 坐下了")
         return r
 
     @plugin_entry(id="vrc_crouch", name=tr("entries.vrc_crouch.name", default="VRChat 蹲下"), description=tr("entries.vrc_crouch.description", default="VRChat 蹲姿预设"))
     async def vrc_crouch(self, **_):
+        await self._ensure_streaming("vrc_crouch")
         r = await self.ui_api.vrc_crouch()
+        await self.udp_service.send()
         self._notify_ai("VRChat 蹲下了")
         return r
 
     @plugin_entry(id="vrc_handshake", name=tr("entries.vrc_handshake.name", default="VRChat 握手"), description=tr("entries.vrc_handshake.description", default="VRChat 握手动作"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}})
     async def vrc_handshake(self, side: str = "right", **_):
+        await self._ensure_streaming("vrc_handshake")
         r = await self.ui_api.vrc_handshake(side)
+        await self.udp_service.send()
         self._notify_ai("VRChat 伸手握手", priority=7)
         return r
 
     @plugin_entry(id="vrc_fbt_calibrate", name=tr("entries.vrc_fbt_calibrate.name", default="VRChat FBT 校准"), description=tr("entries.vrc_fbt_calibrate.description", default="VRChat 全身追踪校准"), input_schema={"type": "object", "properties": {"height": {"type": "string", "enum": ["short", "medium", "tall", "tower"], "default": "medium"}}})
     async def vrc_fbt_calibrate(self, height: str = "medium", **_): return await self.ui_api.vrc_fbt_calibrate(height)
+
+    @plugin_entry(id="vrc_left_menu", name=tr("entries.vrc_left_menu.name", default="VRChat 左手菜单"), description=tr("entries.vrc_left_menu.description", default="打开 VRChat 左手菜单"))
+    async def vrc_left_menu(self, **_):
+        await self._ensure_streaming("vrc_left_menu")
+        r = await self.ui_api.vrc_left_menu(pressed=True)
+        await self.udp_service.send()
+        await asyncio.sleep(0.05)
+        await self.ui_api.vrc_left_menu(pressed=False)
+        await self.udp_service.send()
+        return r
+
+    @plugin_entry(id="vrc_right_menu", name=tr("entries.vrc_right_menu.name", default="VRChat 右手菜单"), description=tr("entries.vrc_right_menu.description", default="打开 VRChat 右手菜单"))
+    async def vrc_right_menu(self, **_):
+        await self._ensure_streaming("vrc_right_menu")
+        r = await self.ui_api.vrc_right_menu(pressed=True)
+        await self.udp_service.send()
+        await asyncio.sleep(0.05)
+        await self.ui_api.vrc_right_menu(pressed=False)
+        await self.udp_service.send()
+        return r
+
+    @plugin_entry(id="vrc_select", name=tr("entries.vrc_select.name", default="VRChat 菜单确认"), description=tr("entries.vrc_select.description", default="VRChat 菜单选择/确认（Z/A/X）"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}})
+    async def vrc_select(self, side: str = "right", **_):
+        await self._ensure_streaming("vrc_select")
+        r = await self.ui_api.vrc_select(side, pressed=True)
+        await self.udp_service.send()
+        await asyncio.sleep(0.05)
+        await self.ui_api.vrc_select(side, pressed=False)
+        await self.udp_service.send()
+        return r
+
+    @plugin_entry(id="vrc_drag_start", name=tr("entries.vrc_drag_start.name", default="VRChat 开始拖拽"), description=tr("entries.vrc_drag_start.description", default="按住 grip+trigger 开始抓取拖拽"), input_schema={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}})
+    async def vrc_drag_start(self, side: str = "right", **_):
+        await self._ensure_streaming("vrc_drag_start")
+        r = await self.ui_api.vrc_drag_start(side)
+        await self.udp_service.send()
+        return r
+
+    @plugin_entry(id="vrc_drag_end", name=tr("entries.vrc_drag_end.name", default="VRChat 结束拖拽"), description=tr("entries.vrc_drag_end.description", default="释放 grip+trigger 结束拖拽"))
+    async def vrc_drag_end(self, **_):
+        await self._ensure_streaming("vrc_drag_end")
+        r = await self.ui_api.vrc_drag_end()
+        await self.udp_service.send()
+        return r
 
     @plugin_entry(id="vrc_gestures_info", name=tr("entries.vrc_gestures_info.name", default="VRChat 手势列表"), description=tr("entries.vrc_gestures_info.description", default="获取可用 VRChat 手势列表"))
     async def vrc_gestures_info(self, **_): return await self.ui_api.vrc_available_gestures()
@@ -504,6 +649,7 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=10.0,
     )
     async def llm_vr_walk(self, direction: str = "forward", duration: float = 3.0, **_):
+        await self._ensure_streaming("llm_vr_walk")
         r = await self.ui_api.vrc_walk_for(direction, duration)
         self._notify_ai(f"VRChat 向{direction}移动 {duration}秒", respond=False)
         return r
@@ -524,7 +670,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_turn(self, direction: str = "right", speed: float = 0.5, **_):
+        await self._ensure_streaming("llm_vr_turn")
         r = await self.ui_api.vrc_turn(direction, speed)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat 向{direction}转向", respond=False)
         return r
 
@@ -535,6 +683,7 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_look_at(self, x: float = 0.0, y: float = 1.5, z: float = -3.0, smooth: float = -1.0, **_):
+        await self._ensure_streaming("llm_vr_look_at")
         return await self.ui_api.look_at(x, y, z, smooth)
 
     @llm_tool(
@@ -545,6 +694,7 @@ class VRControllerPlugin(NekoPluginBase):
     )
     async def llm_vr_animation(self, action: str = "nod", count: int = 1, speed: float = 1.0,
                                side: str = "right", style: str = "hello", **_):
+        await self._ensure_streaming("vr_animation")
         if action == "nod":
             r = await self.ui_api.do_nod_head(count, speed)
         elif action == "shake":
@@ -552,7 +702,6 @@ class VRControllerPlugin(NekoPluginBase):
         elif action == "tilt":
             r = await self.ui_api.do_tilt_head("left", 15)
         elif action == "wave":
-            await self._ensure_streaming("vr_animation/wave")
             r = await self.ui_api.do_wave_hand(side, style)
             self._notify_ai(f"正在挥手 ({style})")
         elif action == "bow":
@@ -569,7 +718,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_pickup(self, side: str = "right", **_):
+        await self._ensure_streaming("llm_vr_pickup")
         r = await self.ui_api.vrc_pickup(side)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat {'右手' if side == 'right' else '左手'}拾取物体", priority=6)
         return r
 
@@ -580,7 +731,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_drop(self, side: str = "right", **_):
+        await self._ensure_streaming("llm_vr_drop")
         r = await self.ui_api.vrc_drop(side)
+        await self.udp_service.send()
         self._notify_ai(f"VRChat {'右手' if side == 'right' else '左手'}放下物体")
         return r
 
@@ -591,7 +744,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_jump(self, **_):
+        await self._ensure_streaming("llm_vr_jump")
         r = await self.ui_api.vrc_jump()
+        await self.udp_service.send()
         self._notify_ai("VRChat 跳跃")
         return r
 
@@ -602,7 +757,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_sit(self, **_):
+        await self._ensure_streaming("llm_vr_sit")
         r = await self.ui_api.vrc_sit()
+        await self.udp_service.send()
         self._notify_ai("VRChat 坐下了")
         return r
 
@@ -613,7 +770,9 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_crouch(self, **_):
+        await self._ensure_streaming("llm_vr_crouch")
         r = await self.ui_api.vrc_crouch()
+        await self.udp_service.send()
         self._notify_ai("VRChat 蹲下了")
         return r
 
@@ -624,9 +783,61 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_handshake(self, side: str = "right", **_):
+        await self._ensure_streaming("llm_vr_handshake")
         r = await self.ui_api.vrc_handshake(side)
+        await self.udp_service.send()
         self._notify_ai("VRChat 伸手握手", priority=7)
         return r
+
+    @llm_tool(
+        name="vr_left_menu",
+        description="在 VRChat 中打开左手快速菜单。",
+        parameters={"type": "object", "properties": {}},
+        timeout=5.0,
+    )
+    async def llm_vr_left_menu(self, **_):
+        await self._ensure_streaming("llm_vr_left_menu")
+        return await self.vrc_left_menu()
+
+    @llm_tool(
+        name="vr_right_menu",
+        description="在 VRChat 中打开右手快速菜单。",
+        parameters={"type": "object", "properties": {}},
+        timeout=5.0,
+    )
+    async def llm_vr_right_menu(self, **_):
+        await self._ensure_streaming("llm_vr_right_menu")
+        return await self.vrc_right_menu()
+
+    @llm_tool(
+        name="vr_select",
+        description="在 VRChat 菜单中执行选择/确认（Z/A/X 键短按）。",
+        parameters={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}, "required": []},
+        timeout=5.0,
+    )
+    async def llm_vr_select(self, side: str = "right", **_):
+        await self._ensure_streaming("llm_vr_select")
+        return await self.vrc_select(side=side)
+
+    @llm_tool(
+        name="vr_drag_start",
+        description="让 VRChat 角色按住 grip+trigger 开始抓取并拖拽物体。",
+        parameters={"type": "object", "properties": {"side": {"type": "string", "enum": ["left", "right"], "default": "right"}}, "required": []},
+        timeout=5.0,
+    )
+    async def llm_vr_drag_start(self, side: str = "right", **_):
+        await self._ensure_streaming("llm_vr_drag_start")
+        return await self.vrc_drag_start(side=side)
+
+    @llm_tool(
+        name="vr_drag_end",
+        description="让 VRChat 角色释放 grip+trigger 结束拖拽。",
+        parameters={"type": "object", "properties": {}},
+        timeout=5.0,
+    )
+    async def llm_vr_drag_end(self, **_):
+        await self._ensure_streaming("llm_vr_drag_end")
+        return await self.vrc_drag_end()
 
     @llm_tool(
         name="vr_dance",
@@ -635,6 +846,7 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=10.0,
     )
     async def llm_vr_dance(self, vmd_path: str = "", **_):
+        await self._ensure_streaming("vr_dance")
         r = await self.ui_api.play_dance(vmd_path=vmd_path)
         self._notify_ai(f"开始播放舞蹈: {vmd_path}", priority=7)
         return r
@@ -646,6 +858,7 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_stop_dance(self, **_):
+        await self._ensure_streaming("vr_stop_dance")
         r = await self.ui_api.stop_dance()
         self._notify_ai("舞蹈已停止")
         return r
@@ -666,6 +879,7 @@ class VRControllerPlugin(NekoPluginBase):
         timeout=5.0,
     )
     async def llm_vr_start_idle(self, **_):
+        await self._ensure_streaming("vr_start_idle")
         return await self.ui_api.start_idle()
 
     @llm_tool(
@@ -742,3 +956,59 @@ class VRControllerPlugin(NekoPluginBase):
         rect = self.screen_capture.get_active_window_rect()
         title = self.screen_capture.get_active_window_title_raw()
         return {"window_rect": rect, "window_title": title}
+
+    # ════════════════ 身体位姿控制 (LLM Tools) ════════════════
+
+    @llm_tool(
+        name="vr_set_device_pose",
+        description="设置VRChat角色某个追踪器的3D位置和四元数旋转，可直接控制头部、左右手、髋部、左右脚的空间姿态。位置单位为米(世界坐标: X=左右, Y=上下, Z=前后)，旋转为四元数(x,y,z,w)。例: 右手前伸→device=right_controller, position_x=0.3, position_y=1.2, position_z=-0.4。可通过vr_get_state查看当前位姿。",
+        parameters={"type": "object", "properties": {
+            "device": {"type": "string", "enum": ["hmd", "left_controller", "right_controller", "hip", "left_foot", "right_foot"], "description": "追踪器名称"},
+            "position_x": {"type": "number", "description": "X 位置(米), 左右方向"},
+            "position_y": {"type": "number", "description": "Y 位置(米), 上下方向"},
+            "position_z": {"type": "number", "description": "Z 位置(米), 前后方向"},
+            "rotation_x": {"type": "number", "description": "四元数 X 分量"},
+            "rotation_y": {"type": "number", "description": "四元数 Y 分量"},
+            "rotation_z": {"type": "number", "description": "四元数 Z 分量"},
+            "rotation_w": {"type": "number", "description": "四元数 W 分量"},
+        }, "required": ["device"]},
+        timeout=5.0,
+    )
+    async def llm_vr_set_device_pose(self, device: str = "", **kwargs):
+        await self._ensure_streaming("llm_vr_set_device_pose")
+        r = await self.ui_api.set_device_pose(device=device, **kwargs)
+        await self.udp_service.send()
+        return r
+
+    @llm_tool(
+        name="vr_set_finger_bends",
+        description="设置VRChat角色单手的Index手指骨骼弯曲值(0=完全伸直, 1=完全弯曲)，可分别控制拇指、食指、中指、无名指、小指。用于精细手势。",
+        parameters={"type": "object", "properties": {
+            "side": {"type": "string", "enum": ["left", "right"], "description": "左手或右手"},
+            "thumb": {"type": "number", "description": "拇指弯曲 0-1"},
+            "index": {"type": "number", "description": "食指弯曲 0-1"},
+            "middle": {"type": "number", "description": "中指弯曲 0-1"},
+            "ring": {"type": "number", "description": "无名指弯曲 0-1"},
+            "pinky": {"type": "number", "description": "小指弯曲 0-1"},
+        }, "required": ["side"]},
+        timeout=5.0,
+    )
+    async def llm_vr_set_finger_bends(self, side: str = "left", **kwargs):
+        await self._ensure_streaming("llm_vr_set_finger_bends")
+        r = await self.ui_api.set_finger_bends(side=side, **kwargs)
+        await self.udp_service.send()
+        return r
+
+    @llm_tool(
+        name="vr_apply_preset",
+        description="快速应用预设全身位姿。standing=站立(默认), t_pose=T字姿势(双手平举), menu=菜单姿势(手在前方操作菜单)。",
+        parameters={"type": "object", "properties": {
+            "preset": {"type": "string", "enum": ["standing", "t_pose", "menu"], "default": "standing", "description": "预设名称"},
+        }, "required": []},
+        timeout=5.0,
+    )
+    async def llm_vr_apply_preset(self, preset: str = "standing", **_):
+        await self._ensure_streaming("llm_vr_apply_preset")
+        r = await self.ui_api.apply_preset(preset)
+        await self.udp_service.send()
+        return r
